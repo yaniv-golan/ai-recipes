@@ -27,14 +27,20 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyyaml
         
+      - name: Generate workflow diagrams
+        run: |
+          python .github/scripts/generate_workflow_diagrams.py
+
       - name: Generate README files
         run: |
           python .github/scripts/generate_readme.py
 
       # Only commit changes if this is a push to main
-      - name: Commit README changes
+      - name: Commit documentation changes
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "docs: Update generated documentation [skip ci]"
-          file_pattern: 'recipes/**/README.md'
+          file_pattern: |
+            recipes/**/README.md
+            recipes/**/workflow.mmd
