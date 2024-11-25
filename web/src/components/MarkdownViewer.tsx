@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { marked } from 'marked';
+import { Marked } from 'marked';
+import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 
 interface MarkdownViewerProps {
@@ -44,20 +45,26 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
         }
     }, [recipePath]);
 
-    // Configure marked options
+    // Create marked instance with highlight extension
+    const marked = new Marked(
+        markedHighlight({
+            langPrefix: 'hljs language-',
+            highlight(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    try {
+                        return hljs.highlight(code, { language: lang }).value;
+                    } catch (err) {
+                        console.error('Highlight.js error:', err);
+                    }
+                }
+                return code;
+            }
+        })
+    );
+
     marked.setOptions({
         gfm: true,
-        breaks: true,
-        highlight: (code: string, language: string) => {
-            if (language && hljs.getLanguage(language)) {
-                try {
-                    return hljs.highlight(code, { language }).value;
-                } catch (err) {
-                    console.error('Highlight.js error:', err);
-                }
-            }
-            return code;
-        }
+        breaks: true
     });
 
     if (isLoading) {
@@ -83,7 +90,7 @@ const MarkdownViewer: React.FC<MarkdownViewerProps> = ({
             <div
                 className="markdown-content"
                 dangerouslySetInnerHTML={{
-                    __html: marked(content)
+                    __html: marked.parse(content)
                 }}
             />
         </div>
