@@ -1,178 +1,151 @@
-# Market Analysis Recipe
+# market-analysis
 
-> "When I needed to analyze the US smart home security market, this approach cut my research time from days to hours." - Sarah
 
-A systematic approach to market analysis that combines multiple AI tools to efficiently gather and synthesize market research. This recipe uses Claude for query generation, Perplexity for research, and ChatGPT for synthesis to create comprehensive market analysis reports.
 
-## Quick Start
+A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports.
 
-1. Ensure you have access to:
-   - Claude (3.5 Sonnet or higher)
-   - Perplexity (Pro recommended)
-   - ChatGPT (GPT-4)
-   - Google Docs
+## Workflow
 
-2. Define your target market (required parameter)
+```mermaid
+---
+title: Workflow
+---
+graph TD
+    query_generation["Research Query Generation<br>(claude)"]
+    query_generation -->|Copy queries for next step| setup_document
+    setup_document["Research Document Setup<br>(google_docs)"]
+    setup_document -->|Output| research_execution
+    research_execution["Research Data Collection<br>(perplexity)"]
+    research_execution -->|Save document as PDF when complete| synthesis_analysis
+    synthesis_analysis["Report Generation<br>(chatgpt)"]
 
-   ```yaml
-   target_market: "US smart home security market"
-   ```
-
-3. Follow the workflow:
-   1. Generate research queries with Claude
-   2. Set up Google Doc with proper formatting
-   3. Execute research in Perplexity
-   4. Synthesize findings with ChatGPT
-
-## Time & Tools
-
-- **Time to Execute**: 15-20 minutes
-- **Tools Required**: 4 (Claude, Perplexity, ChatGPT, Google Docs)
+```
 
 ## Parameters
 
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| target_market | Yes | - | The specific market to analyze |
-| time_horizon | No | "3 years" | Future time period for projections |
+| Parameter | Required | Description | Example |
+|-----------|----------|-------------|----------|
+| target_market | Yes | The specific market to analyze | US smart home security market |
+| time_horizon | No | Future time period for projections | 2024-2027 |
+
+
+## Tools Required
+
+### claude
+
+- Query generation
+- Research framework development
+
+**Settings:**
+
+- model: Claude 3.5 Sonnet
+
+### perplexity
+
+- Market research execution
+- Data gathering
+
+**Settings:**
+
+- focus: Web
+- enable_pro: True
+
+### chatgpt
+
+- Data synthesis
+- Report generation
+
+**Settings:**
+
+- model: GPT-4o
+- enable_web_search: False
+
+### google_docs
+
+- Research documentation
+- Report organization
+
+**Settings:**
+
+- enable_markdown: True
+
+
 
 ## Workflow Steps
+### Research Query Generation
 
-### 1. Query Generation (Claude)
+Generate comprehensive research queries using Claude's analytical capabilities
 
-Uses Claude to generate 5 focused research queries covering different aspects of the market:
+**Usage:**
+1. Create a new conversation with Claude
+2. Use the provided prompt template
+3. Review and refine generated queries
 
-- Market size and growth
-- Competitive landscape
-- Consumer trends
-- Growth drivers
-- Technology/innovation
 
-### 2. Document Setup (Google Docs)
+**Note:** Ensure queries cover market size, competitors, trends, consumer behavior, and technology/innovation aspects
 
-Creates a structured document for research collection:
+### Research Document Setup
 
-- Name your google doc with a meaningful name. Consider using the following format: "[Date] - [Topic] - Market Analysis Research"
-- Example: "2024-11-25 - Smart Home Security - Market Analysis Research"
-- Proper formatting for queries and responses (H1 for queries, normal text for responses)
+Create and format Google Doc for research documentation
 
-### 3. Research Execution (Perplexity)
+**Usage:**
+1. Create new Google Doc
+2. Set title format: "[Current Date] - [Target Market] - Market Analysis Research"
+   Example: "2024-11-25 - Smart Home Security - Market Analysis Research"
+3. For each query from previous step:
+   a. Paste query text
+   b. Format as Heading 1
+   c. Press Enter twice to leave space for response
+   d. Ensure normal text formatting is set for response area
 
-Systematically gathers data for each query:
 
-- Captures complete responses using the Copy button at the bottom of the response
-- Maintains organized documentation
+**Note:** Double-check formatting settings after each query addition
 
-### 4. Analysis Synthesis (ChatGPT)
+### Research Data Collection
 
-Generates comprehensive market analysis with:
+Execute research queries and document findings
 
-- Executive Summary
-- Market Overview
-- Strategic Implications
+**Usage:**
+For each research query in the Google Doc:
+1. Copy query text
+2. Execute in Perplexity
+3. Wait for complete response
+4. Click 'Copy' button in Perplexity response
+5. Return to Google Doc
+6. Paste response under corresponding query heading
+7. Add blank line before next query section
 
-## Output Structure
 
-The final analysis includes:
+### Report Generation
 
-```markdown
-# Market Analysis Report
-## 1. Executive Summary
-- Market Size and Growth
-- Key Drivers
-- Major Trends
+Synthesize research findings into comprehensive market analysis
 
-## 2. Market Overview
-- Detailed Segmentation
-- Growth Drivers
-- Constraints
+**Usage:**
+1. Upload research PDF to ChatGPT
+2. Use the provided analysis prompt
+3. Review output for completeness
 
-## 3. Strategic Implications
-- Market Opportunities
-- Entry Barriers
-- Success Factors
+
+**Note:** Ensure all data points are properly referenced in the final report
+
+## Tips
+
+- Review queries before execution to ensure comprehensive coverage
+- Double-check formatting in Google Doc after each paste
+- Let Perplexity fully complete its response before copying
+- Review the full research document before running the synthesis
+
+## Examples
+
+### Example Usage
+
+Parameters:
+```yaml
+target_market: US smart home security market
+time_horizon: 2024-2027
 ```
 
-## Best Practices
+Sample Queries:
+- What is the total market size of the US smart home security systems industry in 2024, including DIY and professional segments, and what are the projected growth rates through 2027?
+- Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings.
 
-1. Query Generation
-   - Review and refine queries before execution
-   - Ensure coverage of all key market aspects
-
-2. Document Organization
-   - Double-check formatting after each paste
-   - Add clear section breaks between queries
-   - Maintain consistent heading hierarchy
-
-3. Research Execution
-   - Let Perplexity complete its response fully
-   - Verify data point consistency
-
-4. Analysis Synthesis
-   - Review all data before synthesis
-   - Ensure data points are properly referenced
-   - Maintain logical flow in analysis
-
-## Tool Requirements
-
-### Claude
-
-- Model: Claude 3.5 Sonnet
-- Purpose: Query generation
-- Key setting: None required
-
-### Perplexity
-
-- Focus: Web
-- Pro account: Recommended
-- Purpose: Research execution
-
-### ChatGPT
-
-- Model: GPT-4
-- Purpose: Analysis synthesis
-- Web search: Not required
-
-### Google Docs
-
-- Purpose: Research documentation
-- Settings: Markdown support enabled
-
-## Troubleshooting
-
-Common issues and solutions:
-
-1. **Formatting issues in Google Docs**
-   - Make sure the style is set to "Normal text" before pasting.
-   - Tools | Prefences | Enable Markdown
-   - Edit | Past as Markdown
-
-2. **Inconsistent data points**
-   - Solution: Cross-reference across multiple queries
-   - Prevention: Include date ranges in queries
-
-## Recipe Variations
-
-1. **Quick Analysis**
-   - Reduce queries to 3 key aspects
-   - Focus on high-level metrics
-   - Use shorter time horizons
-
-2. **Deep Dive**
-   - Add competitor-specific queries
-   - Include patent/technology analysis
-   - Expand regional coverage
-
-## Credits
-
-## Support
-
-For issues or suggestions:
-
-1. Use GitHub Issues for bugs/feature requests
-2. Use GitHub Discussions for usage questions
-3. Check existing discussions before posting
-
-## License
-
-MIT License - Feel free to modify and reuse
