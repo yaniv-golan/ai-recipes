@@ -86,7 +86,8 @@
         "tool": "google_docs",
         "description": "Create and format Google Doc for competitor research",
         "tool_usage": "1. Create new Google Doc\n2. Set title format: \"[Date] - [Industry] - Competitive Analysis\"\n   Example: \"2024-11-25 - Smart Home Security - Competitive Analysis\"\n3. For each query from previous step:\n   a. Paste query text\n   b. Format as Heading 1\n   c. Press Enter twice to leave space for response\n   d. Ensure normal text formatting is set for response area\n",
-        "notes": "Double-check formatting settings after each query addition"
+        "notes": "Double-check formatting settings after each query addition",
+        "prompt": null
       },
       {
         "id": "research_execution",
@@ -95,7 +96,8 @@
         "description": "Execute competitor research queries and document findings",
         "input_source": "queries from query_generation step",
         "tool_usage": "For each research query in the Google Doc:\n1. Copy query text\n2. Execute in Perplexity \n3. Wait for complete response\n4. Click 'Copy' button in Perplexity response\n5. Return to Google Doc\n6. Paste response under corresponding query heading\n7. Add blank line before next query section\n",
-        "output_handling": "Save document as PDF when complete"
+        "output_handling": "Save document as PDF when complete",
+        "prompt": null
       },
       {
         "id": "competitive_assessment",
@@ -214,7 +216,8 @@
         "tool": "google_docs",
         "description": "Create and format Google Doc for research documentation",
         "tool_usage": "1. Create new Google Doc\n2. Set title format: \"[Current Date] - [Target Market] - Market Analysis Research\"\n   Example: \"2024-11-25 - Smart Home Security - Market Analysis Research\"\n3. For each query from previous step:\n   a. Paste query text\n   b. Format as Heading 1\n   c. Press Enter twice to leave space for response\n   d. Ensure normal text formatting is set for response area\n",
-        "notes": "Double-check formatting settings after each query addition"
+        "notes": "Double-check formatting settings after each query addition",
+        "prompt": null
       },
       {
         "id": "research_execution",
@@ -223,7 +226,8 @@
         "description": "Execute research queries and document findings",
         "input_source": "queries from query_generation step",
         "tool_usage": "For each research query in the Google Doc:\n1. Copy query text\n2. Execute in Perplexity\n3. Wait for complete response\n4. Click 'Copy' button in Perplexity response\n5. Return to Google Doc\n6. Paste response under corresponding query heading\n7. Add blank line before next query section\n",
-        "output_handling": "Save document as PDF when complete"
+        "output_handling": "Save document as PDF when complete",
+        "prompt": null
       },
       {
         "id": "synthesis_analysis",
