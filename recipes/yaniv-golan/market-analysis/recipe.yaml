@@ -9,12 +9,6 @@ tags:
   - multi-tool
   - data-synthesis
 
-metadata:
-  difficulty: intermediate
-  time_estimate: "15-20 minutes"
-  visibility: public
-  license: MIT
-
 parameters:
   - name: target_market
     description: "The specific market to analyze"
@@ -40,7 +34,7 @@ tools:
       - "Market research execution"
       - "Data gathering"
     settings:
-      focus: "Academic"
+      focus: "Web"
       enable_pro: true
   
   chatgpt:

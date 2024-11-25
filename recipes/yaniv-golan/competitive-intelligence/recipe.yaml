@@ -1,0 +1,204 @@
+name: competitive-intelligence
+description: "A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports."
+
+tags:
+  - competitive-intelligence
+  - competitor-analysis
+  - market-research
+  - multi-tool
+  - data-synthesis
+  - strategic-analysis
+
+parameters:
+  - name: company_name
+    description: "Your company name for competitor analysis context"
+    required: true
+    example: "SimpliSafe"
+  
+  - name: target_industry
+    description: "The industry to analyze competitors in"
+    required: true
+    example: "US smart home security market"
+  
+  - name: competitors
+    description: "List of key competitors to focus on"
+    required: false
+    example: "ADT, Ring, Vivint"
+
+tools:
+  claude:
+    used_for:
+      - "Query generation"
+      - "Analysis framework development"
+    settings:
+      model: "Claude 3.5 Sonnet"
+
+  perplexity:
+    used_for:
+      - "Competitor research execution"
+      - "Data gathering"
+    settings:
+      focus: "Web"
+      enable_pro: true
+  
+  chatgpt:
+    used_for:
+      - "Data synthesis"
+      - "Report generation"
+    settings:
+      model: "GPT-4o"
+      enable_web_search: false
+  
+  google_docs:
+    used_for:
+      - "Research documentation"
+      - "Report organization"
+    settings:
+      enable_markdown: true
+
+workflow:
+  - id: "query_generation"
+    name: "Competitive Query Generation"
+    tool: "claude"
+    description: "Generate focused competitor analysis queries"
+    tool_usage: |
+      1. Create a new conversation with Claude
+      2. Use the provided prompt template
+      3. Review and refine generated queries
+    prompt: |
+      **Role:** You are a market research specialist working on behalf of **{{company_name}}**. Your task is to generate **5 specific, standalone search queries** to analyze competitors in the following target industry:
+
+      <target_industry>
+      {{target_industry}}
+      </target_industry>
+
+      **Task Requirements:**
+      - **Different Competitive Aspects:** Each query should focus on a different aspect of competitor analysis relevant to **{{company_name}}**, such as market share, product offerings, marketing strategies, financial performance, customer feedback, etc.
+      - **Current Year Data:** Target data from the **current year**.
+      - **Include Specific Competitor Names:** Where relevant, mention specific competitors, especially those directly competing with **{{company_name}}**.
+      - **Self-Contained:** Each query must include all necessary context to stand alone.
+
+      **Instructions:**
+      1. **Generate 5 Search Queries:** Focus on producing concise and effective search queries that meet the above requirements and are tailored to **{{company_name}}**'s interests.
+      2. **Formatting:** Present each query on a separate line, numbered from 1 to 5.
+      3. **Style:** Keep queries clear, specific, and consistent in format.
+
+      Please generate the 5 search queries accordingly.
+    output_handling: "Copy queries for next step"
+    notes: "Ensure queries cover market share, product comparison, strategy, financial performance, and customer feedback"
+
+  - id: "setup_document"
+    name: "Research Document Setup"
+    tool: "google_docs"
+    description: "Create and format Google Doc for competitor research"
+    tool_usage: |
+      1. Create new Google Doc
+      2. Set title format: "[Date] - [Industry] - Competitive Analysis"
+         Example: "2024-11-25 - Smart Home Security - Competitive Analysis"
+      3. For each query from previous step:
+         a. Paste query text
+         b. Format as Heading 1
+         c. Press Enter twice to leave space for response
+         d. Ensure normal text formatting is set for response area
+    notes: "Double-check formatting settings after each query addition"
+
+  - id: "research_execution"
+    name: "Competitive Research Collection"
+    tool: "perplexity"
+    description: "Execute competitor research queries and document findings"
+    input_source: "queries from query_generation step"
+    tool_usage: |
+      For each research query in the Google Doc:
+      1. Copy query text
+      2. Execute in Perplexity with Academic focus enabled
+      3. Wait for complete response
+      4. Click 'Copy' button in Perplexity response
+      5. Return to Google Doc
+      6. Paste response under corresponding query heading
+      7. Add blank line before next query section
+    output_handling: "Save document as PDF when complete"
+
+  - id: "competitive_assessment"
+    name: "Competitive Analysis Generation"
+    tool: "chatgpt"
+    description: "Synthesize research findings into comprehensive competitive assessment"
+    input_source: "PDF from research_execution step"
+    tool_usage: |
+      1. Upload research PDF to ChatGPT
+      2. Use the provided analysis prompt
+      3. Review output for completeness
+    prompt: |
+      **Role:** You are a seasoned market analyst tasked with creating a comprehensive assessment based on the provided competitive research data. Your analysis should be thorough, insightful, and reference specific data points from the research.
+
+      The competitive research data that you need to analyze is attached.
+
+      **Task:** Please create a comprehensive competitive assessment report based on this data. Your report should include the following sections:
+
+      # Competitive Assessment Report Background
+
+      ## Key Data Points
+      ### Key Data Points for Competitive Landscape
+      [Key Data Points for Competitive Landscape]
+
+      ### Key Data Points for Strategic Analysis
+      [Key Data Points for Strategic Analysis]
+
+      ### Key Data Points for Competitive Dynamics
+      [Key Data Points for Competitive Dynamics]
+
+      ## Sections Analysis
+      ### Section Analysis for Competitive Landscape
+      [Section Analysis for Competitive Landscape]
+
+      ### Section Analysis for Strategic Analysis
+      [Section Analysis for Strategic Analysis]
+
+      ### Section Analysis for Competitive Dynamics
+      [Section Analysis for Competitive Dynamics]
+
+      # Competitive Assessment Report
+
+      ## 1. Competitive Landscape
+      - Market Share Analysis
+      - Positioning Comparison
+      - Key Player Profiles
+
+      ## 2. Strategic Analysis
+      - Product/Service Comparison
+      - Pricing Strategies
+      - Go-to-Market Approaches
+
+      ## 3. Competitive Dynamics
+      - Key Differentiators
+      - Strengths/Weaknesses
+      - Strategic Moves
+
+      Instructions:
+      1. Begin by thoroughly reading the provided competitive research data.
+      2. Extract and categorize key data points.
+      3. Review and identify missing data points.
+      4. For each section analysis:
+         - Break down thought process and findings
+         - Connect data points to conclusions
+         - Identify gaps and inconsistencies
+      5. Review and improve analyses.
+      6. Create final report with specific data point references.
+
+      Please proceed with your analysis and report.
+    notes: "Ensure all competitor comparisons are objective and data-driven"
+
+tips:
+  - "Include specific competitor names in queries when possible"
+  - "Focus on recent data and developments"
+  - "Cross-reference competitive claims across multiple sources"
+  - "Look for objective metrics and comparisons"
+  - "Pay attention to pricing and feature comparisons"
+
+examples:
+  - parameters:
+      company_name: "SimpliSafe"
+      target_industry: "US smart home security market"
+      competitors: "ADT, Ring, Vivint"
+    sample_queries:
+      - "What are the current market shares and revenue figures for ADT, SimpliSafe, and Ring in the US smart home security market as of 2024?"
+      - "Compare product offerings, pricing models, and subscription plans for leading US smart home security providers in 2024."
