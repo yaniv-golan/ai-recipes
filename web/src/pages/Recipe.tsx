@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import MarkdownViewer from '../components/MarkdownViewer';
+import { marked } from 'marked';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css';
+
+// Rest of your Recipe.tsx code remains the same...
 
 interface RecipeData {
     name: string;
@@ -17,6 +22,22 @@ export function Recipe() {
     const [data, setData] = useState<RecipeData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Configure marked options
+    marked.setOptions({
+        gfm: true,
+        breaks: true,
+        highlight: (code, language) => {
+            if (language && hljs.getLanguage(language)) {
+                try {
+                    return hljs.highlight(code, { language }).value;
+                } catch (err) {
+                    console.error('Highlight.js error:', err);
+                }
+            }
+            return code;
+        }
+    });
 
     useEffect(() => {
         const fetchRecipe = async () => {
@@ -88,7 +109,7 @@ export function Recipe() {
                         {data.description}
                     </div>
                     {data.tags && data.tags.length > 0 && (
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex flex-wrap gap-2 mt-4">
                             {data.tags.map(tag => (
                                 <span
                                     key={tag}
@@ -101,20 +122,13 @@ export function Recipe() {
                     )}
                 </CardHeader>
                 <CardContent>
-                    <div className="prose max-w-none">
-                        {data.readme ? (
-                            // If readme content is directly in the JSON
+                    <div className="prose prose-slate max-w-none">
+                        {data.readme && (
                             <div
                                 className="markdown-content"
                                 dangerouslySetInnerHTML={{
                                     __html: marked(data.readme)
                                 }}
-                            />
-                        ) : (
-                            // If readme should be fetched from the repository
-                            <MarkdownViewer
-                                recipePath={`recipes/${data.path}`}
-                                className="mt-4"
                             />
                         )}
                     </div>
