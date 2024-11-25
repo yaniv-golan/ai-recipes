@@ -20,6 +20,7 @@ interface RecipeData {
         tool: string;
         description: string;
         output_handling?: string;
+        prompt?: string;
     }>;
 }
 
@@ -148,6 +149,25 @@ export function Recipe() {
                                 }}
                             />
                         )}
+                    </div>
+                    <div className="mt-8">
+                        <h2 className="text-xl font-semibold mb-4">Workflow Steps</h2>
+                        <div className="space-y-6">
+                            {data.workflow.map((step) => (
+                                <div key={step.id} className="bg-white p-6 rounded-lg shadow-sm border">
+                                    <h3 className="text-lg font-medium mb-2">{step.name}</h3>
+                                    <p className="text-gray-600 mb-4">{step.description}</p>
+                                    {step.prompt && (
+                                        <div className="mt-4">
+                                            <h4 className="text-sm font-medium text-gray-700 mb-2">Prompt Template</h4>
+                                            <pre className="bg-gray-50 p-4 rounded-md overflow-x-auto whitespace-pre-wrap text-sm">
+                                                {step.prompt}
+                                            </pre>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

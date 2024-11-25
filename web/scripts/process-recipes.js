@@ -53,7 +53,12 @@ async function processRecipes() {
                                     ...recipeYaml,
                                     author: user,
                                     path: `${user}/${recipe}`,
-                                    readme
+                                    readme,
+                                    parameters: recipeYaml.parameters || {},
+                                    workflow: (recipeYaml.workflow || []).map(step => ({
+                                        ...step,
+                                        prompt: step.prompt ? step.prompt.toString() : null
+                                    }))
                                 });
 
                                 console.log('Successfully processed recipe:', recipe);
