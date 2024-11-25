@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import MarkdownViewer from '../components/MarkdownViewer';
+import MermaidViewer from '../components/MermaidViewer';
 import { marked } from 'marked';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
-
-// Rest of your Recipe.tsx code remains the same...
 
 interface RecipeData {
     name: string;
@@ -15,6 +14,31 @@ interface RecipeData {
     readme: string;
     path: string;
     tags?: string[];
+    workflow: Array<{
+        id: string;
+        name: string;
+        tool: string;
+        description: string;
+        output_handling?: string;
+    }>;
+}
+
+function generateMermaidDiagram(workflow: RecipeData['workflow']): string {
+    let mermaid = 'graph TD\n';
+
+    // Add nodes and connections
+    workflow.forEach((step, index) => {
+        // Add node
+        mermaid += `    ${step.id}["${step.name}<br/>(${step.tool})"]\n`;
+
+        // Add connection to next step
+        if (index < workflow.length - 1) {
+            const nextStep = workflow[index + 1];
+            mermaid += `    ${step.id} -->|${step.output_handling || 'Output'}| ${nextStep.id}\n`;
+        }
+    });
+
+    return mermaid;
 }
 
 export function Recipe() {
@@ -22,22 +46,6 @@ export function Recipe() {
     const [data, setData] = useState<RecipeData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Configure marked options
-    marked.setOptions({
-        gfm: true,
-        breaks: true,
-        highlight: (code, language) => {
-            if (language && hljs.getLanguage(language)) {
-                try {
-                    return hljs.highlight(code, { language }).value;
-                } catch (err) {
-                    console.error('Highlight.js error:', err);
-                }
-            }
-            return code;
-        }
-    });
 
     useEffect(() => {
         const fetchRecipe = async () => {
@@ -98,6 +106,8 @@ export function Recipe() {
         );
     }
 
+    const mermaidDiagram = generateMermaidDiagram(data.workflow);
+
     return (
         <div className="container mx-auto px-4 py-8">
             <Card>
@@ -122,12 +132,19 @@ export function Recipe() {
                     )}
                 </CardHeader>
                 <CardContent>
-                    <div className="prose prose-slate max-w-none">
+                    <div className="mb-8">
+                        <h2 className="text-xl font-semibold mb-4">Workflow</h2>
+                        <MermaidViewer
+                            chart={mermaidDiagram}
+                            className="bg-white p-4 rounded-lg shadow-sm"
+                        />
+                    </div>
+                    <div className="prose max-w-none">
                         {data.readme && (
                             <div
                                 className="markdown-content"
                                 dangerouslySetInnerHTML={{
-                                    __html: marked(data.readme)
+                                    __html: marked.parse(data.readme)
                                 }}
                             />
                         )}

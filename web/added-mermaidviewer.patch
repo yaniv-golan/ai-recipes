@@ -1,0 +1,2603 @@
+diff --git a/.github/scripts/check_files.py b/.github/scripts/check_files.py
+index b663368..6660525 100755
+--- a/.github/scripts/check_files.py
++++ b/.github/scripts/check_files.py
+@@ -2,16 +2,13 @@
+ """
+ Check for required files in recipe directories:
+ - recipe.yaml
+-- workflow.mmd
+-- description.md (optional)
+-- README.md (will be generated)
++- README.md
+ Also validates URL-friendly names
+ """
+ 
+ import os
+ import sys
+ import re
+-import yaml
+ from pathlib import Path
+ 
+ def is_url_friendly(name):
+@@ -25,7 +22,7 @@ def check_recipe_files(recipe_dir):
+         errors.append(f"Recipe directory name not URL-friendly: {recipe_dir.name}")
+     
+     # Check required files
+-    required_files = ['recipe.yaml', 'workflow.mmd']
++    required_files = ['recipe.yaml', 'README.md']
+     for required_file in required_files:
+         file_path = recipe_dir / required_file
+         if not file_path.exists():
+@@ -81,4 +78,4 @@ def main():
+     sys.exit(0)
+ 
+ if __name__ == "__main__":
+-    main()
++    main()
+\ No newline at end of file
+diff --git a/.github/scripts/generate_readme.py b/.github/scripts/generate_readme.py
+index ad14ab5..ad1ba5f 100644
+--- a/.github/scripts/generate_readme.py
++++ b/.github/scripts/generate_readme.py
+@@ -1,6 +1,6 @@
+ #!/usr/bin/env python3
+ """
+-Generate README.md files from recipe.yaml, workflow.mmd, and description.md
++Generate README.md files from recipe.yaml and description.md (if exists)
+ """
+ 
+ import os
+@@ -8,35 +8,57 @@ import sys
+ import yaml
+ from pathlib import Path
+ 
+-def read_file_if_exists(path):
+-    """Read file content if it exists, return empty string otherwise."""
+-    try:
+-        with open(path, 'r') as f:
+-            return f.read()
+-    except FileNotFoundError:
+-        return ''
++def generate_mermaid_diagram(workflow):
++    """Generate Mermaid diagram from workflow steps."""
++    mermaid = 'graph TD\n'
++    
++    # Add nodes and connections
++    for i, step in enumerate(workflow):
++        step_id = step['id']
++        step_name = step['name']
++        tool = step['tool']
++        
++        # Add node
++        mermaid += f'    {step_id}["{step_name}<br>({tool})"]\n'
++        
++        # Add connection to next step
++        if i < len(workflow) - 1:
++            next_step = workflow[i + 1]
++            mermaid += f'    {step_id} -->|{step.get("output_handling", "Output")}| {next_step["id"]}\n'
++    
++    return mermaid
+ 
+-def generate_readme(recipe_data, workflow_diagram, description=''):
+-    """Generate complete README content."""
+-    parameters_table = '| Parameter | Required | Description | Example |\n'
+-    parameters_table += '|-----------|----------|-------------|----------|\n'
++def generate_parameters_table(parameters):
++    """Generate markdown table for parameters."""
++    table = '| Parameter | Required | Description | Example |\n'
++    table += '|-----------|----------|-------------|----------|\n'
+     
+-    for param in recipe_data['parameters']:
++    for param in parameters:
+         required = 'Yes' if param.get('required', False) else 'No'
+-        parameters_table += f"| {param['name']} | {required} | {param['description']} | {param['example']} |\n"
++        table += f'| {param["name"]} | {required} | {param["description"]} | {param["example"]} |\n'
+     
+-    # Generate tools section
+-    tools_section = ''
+-    for tool_name, tool_info in recipe_data['tools'].items():
+-        tools_section += f'### {tool_name}\n\n'
++    return table
++
++def generate_tools_section(tools):
++    """Generate tools section."""
++    section = ''
++    for tool_name, tool_info in tools.items():
++        section += f'### {tool_name}\n\n'
+         if 'used_for' in tool_info:
+             for use in tool_info['used_for']:
+-                tools_section += f'- {use}\n'
++                section += f'- {use}\n'
+         if 'settings' in tool_info:
+-            tools_section += '\n**Settings:**\n\n'
++            section += '\n**Settings:**\n\n'
+             for setting, value in tool_info['settings'].items():
+-                tools_section += f'- {setting}: {value}\n'
+-        tools_section += '\n'
++                section += f'- {setting}: {value}\n'
++        section += '\n'
++    return section
++
++def generate_readme(recipe_data, description=''):
++    """Generate complete README content."""
++    workflow_diagram = generate_mermaid_diagram(recipe_data['workflow'])
++    parameters_table = generate_parameters_table(recipe_data['parameters'])
++    tools_section = generate_tools_section(recipe_data['tools'])
+     
+     readme = f"""# {recipe_data['name']}
+ 
+@@ -47,9 +69,6 @@ def generate_readme(recipe_data, workflow_diagram, description=''):
+ ## Workflow
+ 
+ ```mermaid
+----
+-title: Workflow
+----
+ {workflow_diagram}
+ ```
+ 
+@@ -62,6 +81,7 @@ title: Workflow
+ {tools_section}
+ 
+ ## Workflow Steps
++
+ """
+     
+     # Add workflow steps
+@@ -100,22 +120,26 @@ title: Workflow
+ 
+ def process_recipe_dir(recipe_dir):
+     """Process a single recipe directory."""
++    yaml_path = recipe_dir / 'recipe.yaml'
++    description_path = recipe_dir / 'description.md'
++    readme_path = recipe_dir / 'README.md'
++    
+     try:
+-        # Read required files
+-        with open(recipe_dir / 'recipe.yaml', 'r') as f:
++        # Read recipe.yaml
++        with open(yaml_path, 'r') as f:
+             recipe_data = yaml.safe_load(f)
+-            
+-        # Read workflow.mmd
+-        workflow_diagram = read_file_if_exists(recipe_dir / 'workflow.mmd')
+         
+         # Read description.md if it exists
+-        description = read_file_if_exists(recipe_dir / 'description.md')
++        description = ''
++        if description_path.exists():
++            with open(description_path, 'r') as f:
++                description = f.read()
+         
+         # Generate README content
+-        readme_content = generate_readme(recipe_data, workflow_diagram, description)
++        readme_content = generate_readme(recipe_data, description)
+         
+         # Write README.md
+-        with open(recipe_dir / 'README.md', 'w') as f:
++        with open(readme_path, 'w') as f:
+             f.write(readme_content)
+             
+         return None
+@@ -148,4 +172,4 @@ def main():
+     sys.exit(0)
+ 
+ if __name__ == "__main__":
+-    main()
++    main()
+\ No newline at end of file
+diff --git a/.github/scripts/generate_workflow_diagrams.py b/.github/scripts/generate_workflow_diagrams.py
+deleted file mode 100644
+index 1a89e81..0000000
+--- a/.github/scripts/generate_workflow_diagrams.py
++++ /dev/null
+@@ -1,80 +0,0 @@
+-#!/usr/bin/env python3
+-"""
+-Generate workflow.mmd files from recipe.yaml files
+-"""
+-
+-import os
+-import sys
+-import yaml
+-from pathlib import Path
+-
+-def generate_workflow_diagram(workflow):
+-    """Generate Mermaid diagram content from workflow steps."""
+-    mermaid = ''
+-    
+-    # Add Mermaid directive and title
+-    mermaid += 'graph TD\n'
+-    
+-    # Add nodes and connections
+-    for i, step in enumerate(workflow):
+-        step_id = step['id']
+-        step_name = step['name']
+-        tool = step['tool']
+-        
+-        # Add node with tool info
+-        mermaid += f'    {step_id}["{step_name}<br>({tool})"]\n'
+-        
+-        # Add connection to next step if not last step
+-        if i < len(workflow) - 1:
+-            next_step = workflow[i + 1]
+-            output = step.get('output_handling', 'Output')
+-            mermaid += f'    {step_id} -->|{output}| {next_step["id"]}\n'
+-    
+-    return mermaid
+-
+-def process_recipe_dir(recipe_dir):
+-    """Process a single recipe directory."""
+-    try:
+-        # Read recipe.yaml
+-        yaml_path = recipe_dir / 'recipe.yaml'
+-        with open(yaml_path, 'r') as f:
+-            recipe_data = yaml.safe_load(f)
+-        
+-        # Generate workflow diagram
+-        workflow_diagram = generate_workflow_diagram(recipe_data['workflow'])
+-        
+-        # Write workflow.mmd
+-        with open(recipe_dir / 'workflow.mmd', 'w') as f:
+-            f.write(workflow_diagram)
+-            
+-        return None
+-    except Exception as e:
+-        return f"Error processing {recipe_dir}: {str(e)}"
+-
+-def main():
+-    recipes_dir = Path("recipes")
+-    errors = []
+-    
+-    for user_dir in recipes_dir.iterdir():
+-        if not user_dir.is_dir():
+-            continue
+-            
+-        for recipe_dir in user_dir.iterdir():
+-            if not recipe_dir.is_dir():
+-                continue
+-                
+-            error = process_recipe_dir(recipe_dir)
+-            if error:
+-                errors.append(error)
+-    
+-    if errors:
+-        print("Workflow diagram generation failed:")
+-        for error in errors:
+-            print(f"- {error}")
+-        sys.exit(1)
+-    
+-    print("Workflow diagram generation completed successfully")
+-    sys.exit(0)
+-
+-if __name__ == "__main__":
+-    main()
+diff --git a/.github/workflows/deploy-pages.yml b/.github/workflows/deploy-pages.yml
+index 0409654..bb1bdda 100644
+--- a/.github/workflows/deploy-pages.yml
++++ b/.github/workflows/deploy-pages.yml
+@@ -3,9 +3,8 @@ name: Deploy to GitHub Pages
+ on:
+   push:
+     branches: [main]
+-  # Add manual trigger
+-  workflow_dispatch:
+ 
++# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+ permissions:
+   contents: write
+   pages: write
+@@ -42,7 +41,9 @@ jobs:
+         with:
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           publish_dir: ./web/dist
++          # Optional settings below
+           user_name: 'github-actions[bot]'
+           user_email: 'github-actions[bot]@users.noreply.github.com'
+           commit_message: 'deploy: ${{ github.sha }}'
+-          enable_jekyll: false
++          full_commit_message: 'deploy: ${{ github.sha }}'
++          enable_jekyll: false
+\ No newline at end of file
+diff --git a/.github/workflows/generate_docs.yml b/.github/workflows/generate_docs.yml
+index 7b64be7..12723ac 100644
+--- a/.github/workflows/generate_docs.yml
++++ b/.github/workflows/generate_docs.yml
+@@ -27,20 +27,14 @@ jobs:
+           python -m pip install --upgrade pip
+           pip install pyyaml
+         
+-      - name: Generate workflow diagrams
+-        run: |
+-          python .github/scripts/generate_workflow_diagrams.py
+-
+       - name: Generate README files
+         run: |
+           python .github/scripts/generate_readme.py
+ 
+       # Only commit changes if this is a push to main
+-      - name: Commit documentation changes
++      - name: Commit README changes
+         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+         uses: stefanzweifel/git-auto-commit-action@v5
+         with:
+           commit_message: "docs: Update generated documentation [skip ci]"
+-          file_pattern: |
+-            recipes/**/README.md
+-            recipes/**/workflow.mmd
++          file_pattern: 'recipes/**/README.md'
+\ No newline at end of file
+diff --git a/README.md b/README.md
+index 5beb32b..b4dc92b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,90 +1 @@
+-# AI Recipes:  Power User Workflows for Maximum Productivity
+-
+-This repository contains a collection of AI-powered workflow recipes designed to maximize your productivity by combining the strengths of different AI tools.  These recipes provide structured approaches to common tasks, enabling you to achieve complex goals efficiently.
+-
+-## For Power Users, Not Developers
+-
+-This repository is specifically for power users of AI tools, *not* for developers.  The recipes here focus on leveraging commercially available, free, or open-source AI tools through their user interfaces—no coding required.  While the future of AI may involve sophisticated agent frameworks that automate these workflows, today's power users still need to get things done.  These recipes empower you to do just that, providing practical, hands-on workflows you can implement immediately.
+-
+-## Why AI Workflows?
+-
+-While individual AI tools like ChatGPT, Claude, and Perplexity are powerful on their own, they often excel in specific areas.  Combining these tools in structured workflows unlocks significant productivity gains.  This repository is where AI power users share their most effective workflows.
+-
+-## Finding and using AI Recipes
+-
+-If you're comfortable using GitHub and reading the recipes in YAML or README files, great. Keep going. 
+-
+-For mere mortals though, a more accessible version of this repostiory is available [https://yaniv-golan.github.io/ai-recipes/](https://yaniv-golan.github.io/ai-recipes/).
+-
+-## Repository Structure
+-
+-```
+-.
+-├── .github             # GitHub configuration files
+-│   ├── ISSUE_TEMPLATE   # Issue templates
+-│   ├── pull_request_template.md # Pull request template
+-│   ├── scripts         # Python scripts for repository management
+-│   └── workflows       # GitHub Actions workflows for automation
+-├── LICENSE             # MIT License
+-├── README.md           # This file
+-├── recipes             # Directory containing AI recipes
+-│   └── yaniv-golan    # Example user directory
+-│       ├── competitive-intelligence # Example recipe
+-│       └── market-analysis        # Another example recipe
+-├── schema             # JSON schema for validating recipes
+-└── web                 # Web application for browsing recipes
+-```
+-
+-## Recipes
+-
+-The heart of this repository is the `recipes` directory.  Here you'll find practical, ready-to-use AI workflow recipes.  Each recipe provides detailed instructions, prompts, and examples for specific tasks.
+-
+-### Contributing Recipes
+-
+-We encourage you to share your own powerful AI workflows by contributing recipes.
+-
+-At some point we'll add a recipe authoring tool, but until that day -
+-
+-#### Recipe Structure
+-
+-```
+-recipes/
+-  <your-github-username>/
+-    <recipe-name>/
+-      recipe.yaml
+-      description.md (optional)
+-```
+-
+-* **`recipes/<your-github-username>/`**: Create a directory under `recipes` with your GitHub username.
+-* **`recipes/<your-github-username>/<recipe-name>/`**:  Create a directory for your recipe with a descriptive, URL-friendly name.
+-* **`recipe.yaml`**: This **required** file defines the recipe's metadata, parameters, tools, and workflow steps in YAML.  Validate it against `schema/recipe-schema.json`.
+-* **`description.md` (optional)**:  A concise overview of the recipe, incorporated into the generated `README.md` after the title and before the main `recipe.yaml` description.
+-
+-These files are **automatically generated**:
+-
+-* **`README.md`**: **Auto-generated** from `recipe.yaml`, including the workflow diagram, parameters, tools, steps, and tips.  Content from `description.md` is included at the beginning.
+-* **`workflow.mmd`**: Contains the Mermaid code for the workflow diagram, **auto-generated** from `recipe.yaml`.
+-
+-## Contributing
+-
+-1. Fork the repository.
+-2. Create a new branch.
+-3. **Validate your recipe:**
+-   ```bash
+-   python .github/scripts/validate_yaml.py
+-   python .github/scripts/validate_schema.py schema/recipe-schema.json recipes/
+-   python .github/scripts/check_files.py
+-   ```
+-4. Add your recipe, following the structure above.
+-5. Fill in the pull request template.
+-6. Submit a pull request.
+-
+-## Automation
+-
+-* **Recipe Validation:**  YAML syntax and schema validation on push/PR.
+-* **Documentation Generation:** Generates `README.md` and `workflow.mmd` on push to `main`.
+-* **Pages Deployment:** Deploys the web app on push to `main`.
+-
+-## License
+-
+-MIT License - see `LICENSE`.
++# ai-recipes
+\ No newline at end of file
+diff --git a/recipes/yaniv-golan/competitive-intelligence/README.md b/recipes/yaniv-golan/competitive-intelligence/README.md
+index a8e71dd..01d4467 100644
+--- a/recipes/yaniv-golan/competitive-intelligence/README.md
++++ b/recipes/yaniv-golan/competitive-intelligence/README.md
+@@ -1,154 +1,202 @@
+-# competitive-intelligence
++# Competitive Intelligence Recipe
+ 
++> "I use this process every time I need to understand competitive movements in our market." - Michael
+ 
++A systematic approach to competitive intelligence that combines multiple AI tools to efficiently gather and analyze competitor information. This recipe uses Claude for query generation, Perplexity for research, and ChatGPT for synthesis to create comprehensive competitive analysis reports.
+ 
+-A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports.
++## Quick Start
+ 
+-## Workflow
++1. Ensure you have access to:
++   - Claude (3.5 Sonnet or higher)
++   - Perplexity (Pro recommended)
++   - ChatGPT (GPT-4)
++   - Google Docs
+ 
+-```mermaid
+----
+-title: Workflow
+----
+-graph TD
+-    query_generation["Competitive Query Generation<br>(claude)"]
+-    query_generation -->|Copy queries for next step| setup_document
+-    setup_document["Research Document Setup<br>(google_docs)"]
+-    setup_document -->|Output| research_execution
+-    research_execution["Competitive Research Collection<br>(perplexity)"]
+-    research_execution -->|Save document as PDF when complete| competitive_assessment
+-    competitive_assessment["Competitive Analysis Generation<br>(chatgpt)"]
++2. Define your parameters:
+ 
+-```
++   ```yaml
++   company_name: "SimpliSafe"              # Your company
++   target_industry: "Smart home security"   # Your industry
++   competitors: "ADT, Ring, Vivint"        # Key competitors
++   ```
++
++3. Follow the workflow:
++   1. Generate competitor research queries with Claude
++   2. Set up Google Doc with proper formatting
++   3. Execute research in Perplexity
++   4. Synthesize competitive assessment with ChatGPT
++
++## Time & Difficulty
++
++- **Time to Execute**: 15-20 minutes
++- **Difficulty Level**: Intermediate
++- **Tools Required**: 4 (Claude, Perplexity, ChatGPT, Google Docs)
+ 
+ ## Parameters
+ 
+ | Parameter | Required | Description | Example |
+ |-----------|----------|-------------|----------|
+-| company_name | Yes | Your company name for competitor analysis context | SimpliSafe |
+-| target_industry | Yes | The industry to analyze competitors in | US smart home security market |
+-| competitors | No | List of key competitors to focus on | ADT, Ring, Vivint |
++| company_name | Yes | Your company's name | "SimpliSafe" |
++| target_industry | Yes | Industry to analyze | "US smart home security market" |
++| competitors | No | Key competitors to focus on | "ADT, Ring, Vivint" |
+ 
++## Workflow Steps
+ 
+-## Tools Required
++### 1. Query Generation (Claude)
+ 
+-### claude
++Generates 5 focused competitor analysis queries covering:
+ 
+-- Query generation
+-- Analysis framework development
++- Market share and revenue comparison
++- Product and pricing analysis
++- Marketing strategies
++- Financial performance
++- Customer feedback and satisfaction
+ 
+-**Settings:**
++### 2. Document Setup (Google Docs)
+ 
+-- model: Claude 3.5 Sonnet
++Creates structured document for competitive research:
+ 
+-### perplexity
++- Title format: "[Date] - [Industry] - Competitive Analysis"
++- Example: "2024-11-25 - Smart Home Security - Competitive Analysis"
++- Organized sections for each competitor aspect
+ 
+-- Competitor research execution
+-- Data gathering
++### 3. Research Execution (Perplexity)
+ 
+-**Settings:**
++Systematically gathers competitor data:
+ 
+-- focus: Web
+-- enable_pro: True
++- Documents competitive insights
++- Maintains structured data collection
+ 
+-### chatgpt
++### 4. Competitive Assessment (ChatGPT)
+ 
+-- Data synthesis
+-- Report generation
++Generates comprehensive analysis covering:
+ 
+-**Settings:**
++- Competitive Landscape
++- Strategic Analysis
++- Competitive Dynamics
+ 
+-- model: GPT-4o
+-- enable_web_search: False
++## Output Structure
+ 
+-### google_docs
++The final assessment includes:
+ 
+-- Research documentation
+-- Report organization
++```markdown
++# Competitive Assessment Report
+ 
+-**Settings:**
++## 1. Competitive Landscape
++- Market Share Analysis
++- Positioning Comparison
++- Key Player Profiles
+ 
+-- enable_markdown: True
++## 2. Strategic Analysis
++- Product/Service Comparison
++- Pricing Strategies
++- Go-to-Market Approaches
+ 
++## 3. Competitive Dynamics
++- Key Differentiators
++- Strengths/Weaknesses
++- Strategic Moves
++```
+ 
++## Best Practices
+ 
+-## Workflow Steps
+-### Competitive Query Generation
++1. Query Generation
++   - Include specific competitor names
++   - Focus on current data
++   - Cover multiple competitive aspects
++   - Be specific about metrics
+ 
+-Generate focused competitor analysis queries
++2. Research Collection
++   - Verify data from multiple sources
++   - Note dates of information
++   - Document contradictions
++   - Track methodology and sources
+ 
+-**Usage:**
+-1. Create a new conversation with Claude
+-2. Use the provided prompt template
+-3. Review and refine generated queries
++3. Analysis
++   - Stay objective
++   - Use specific data points
++   - Note information gaps
++   - Consider market context
+ 
++4. Report Creation
++   - Use consistent competitor naming
++   - Include source citations
++   - Highlight key insights
++   - Note limitations
+ 
+-**Note:** Ensure queries cover market share, product comparison, strategy, financial performance, and customer feedback
++## Tool Requirements
+ 
+-### Research Document Setup
++### Claude
+ 
+-Create and format Google Doc for competitor research
++- Model: Claude 3.5 Sonnet
++- Purpose: Competitor query generation
++- Key setting: None required
+ 
+-**Usage:**
+-1. Create new Google Doc
+-2. Set title format: "[Date] - [Industry] - Competitive Analysis"
+-   Example: "2024-11-25 - Smart Home Security - Competitive Analysis"
+-3. For each query from previous step:
+-   a. Paste query text
+-   b. Format as Heading 1
+-   c. Press Enter twice to leave space for response
+-   d. Ensure normal text formatting is set for response area
++### Perplexity
+ 
++- Pro account: Recommended
++- Purpose: Competitor research
+ 
+-**Note:** Double-check formatting settings after each query addition
++### ChatGPT
+ 
+-### Competitive Research Collection
++- Model: GPT-4
++- Purpose: Competitive assessment
++- Web search: Not required
+ 
+-Execute competitor research queries and document findings
++### Google Docs
+ 
+-**Usage:**
+-For each research query in the Google Doc:
+-1. Copy query text
+-2. Execute in Perplexity 
+-3. Wait for complete response
+-4. Click 'Copy' button in Perplexity response
+-5. Return to Google Doc
+-6. Paste response under corresponding query heading
+-7. Add blank line before next query section
++- Purpose: Research documentation
++- Settings: Markdown support enabled
+ 
++## Troubleshooting
+ 
+-### Competitive Analysis Generation
++Common issues and solutions:
+ 
+-Synthesize research findings into comprehensive competitive assessment
++1. **Outdated Competitor Data**
++   - Solution: Add date ranges to queries
++   - Alternative: Cross-reference multiple sources
+ 
+-**Usage:**
+-1. Upload research PDF to ChatGPT
+-2. Use the provided analysis prompt
+-3. Review output for completeness
++2. **Inconsistent Metrics**
++   - Solution: Standardize metrics before comparison
++   - Prevention: Define key metrics in queries
+ 
++3. **Missing Private Company Data**
++   - Solution: Use industry estimates
++   - Alternative: Focus on observable metrics
+ 
+-**Note:** Ensure all competitor comparisons are objective and data-driven
++## Recipe Variations
+ 
+-## Tips
++1. **Quick Assessment**
++   - Focus on top 2-3 competitors
++   - Use key metrics only
++   - Streamline analysis sections
+ 
+-- Include specific competitor names in queries when possible
+-- Focus on recent data and developments
+-- Cross-reference competitive claims across multiple sources
+-- Look for objective metrics and comparisons
+-- Pay attention to pricing and feature comparisons
++2. **Deep Dive**
++   - Add product feature matrix
++   - Include customer sentiment analysis
++   - Track historical changes
+ 
+-## Examples
++3. **Strategic Focus**
++   - Emphasize go-to-market strategies
++   - Focus on differentiation
++   - Analyze future positioning
+ 
+-### Example Usage
++## Competitive Intelligence Ethics
+ 
+-Parameters:
+-```yaml
+-company_name: SimpliSafe
+-target_industry: US smart home security market
+-competitors: ADT, Ring, Vivint
+-```
++1. Use only publicly available information
++2. Verify sources and data points
++3. Maintain objectivity in analysis
++4. Respect confidential information
++5. Follow industry research guidelines
++
++## Support
++
++For issues or suggestions:
++
++1. Use GitHub Issues for bugs/feature requests
++2. Use GitHub Discussions for usage questions
++3. Check existing discussions before posting
+ 
+-Sample Queries:
+-- What are the current market shares and revenue figures for ADT, SimpliSafe, and Ring in the US smart home security market as of 2024?
+-- Compare product offerings, pricing models, and subscription plans for leading US smart home security providers in 2024.
++## License
+ 
++MIT License - Feel free to modify and reuse
+diff --git a/recipes/yaniv-golan/market-analysis/README.md b/recipes/yaniv-golan/market-analysis/README.md
+index 6094d45..f1a681a 100644
+--- a/recipes/yaniv-golan/market-analysis/README.md
++++ b/recipes/yaniv-golan/market-analysis/README.md
+@@ -1,151 +1,178 @@
+-# market-analysis
++# Market Analysis Recipe
+ 
++> "When I needed to analyze the US smart home security market, this approach cut my research time from days to hours." - Sarah
+ 
++A systematic approach to market analysis that combines multiple AI tools to efficiently gather and synthesize market research. This recipe uses Claude for query generation, Perplexity for research, and ChatGPT for synthesis to create comprehensive market analysis reports.
+ 
+-A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports.
++## Quick Start
+ 
+-## Workflow
++1. Ensure you have access to:
++   - Claude (3.5 Sonnet or higher)
++   - Perplexity (Pro recommended)
++   - ChatGPT (GPT-4)
++   - Google Docs
+ 
+-```mermaid
+----
+-title: Workflow
+----
+-graph TD
+-    query_generation["Research Query Generation<br>(claude)"]
+-    query_generation -->|Copy queries for next step| setup_document
+-    setup_document["Research Document Setup<br>(google_docs)"]
+-    setup_document -->|Output| research_execution
+-    research_execution["Research Data Collection<br>(perplexity)"]
+-    research_execution -->|Save document as PDF when complete| synthesis_analysis
+-    synthesis_analysis["Report Generation<br>(chatgpt)"]
++2. Define your target market (required parameter)
+ 
+-```
++   ```yaml
++   target_market: "US smart home security market"
++   ```
+ 
+-## Parameters
++3. Follow the workflow:
++   1. Generate research queries with Claude
++   2. Set up Google Doc with proper formatting
++   3. Execute research in Perplexity
++   4. Synthesize findings with ChatGPT
+ 
+-| Parameter | Required | Description | Example |
+-|-----------|----------|-------------|----------|
+-| target_market | Yes | The specific market to analyze | US smart home security market |
+-| time_horizon | No | Future time period for projections | 2024-2027 |
++## Time & Tools
+ 
++- **Time to Execute**: 15-20 minutes
++- **Tools Required**: 4 (Claude, Perplexity, ChatGPT, Google Docs)
+ 
+-## Tools Required
++## Parameters
+ 
+-### claude
++| Parameter | Required | Default | Description |
++|-----------|----------|---------|-------------|
++| target_market | Yes | - | The specific market to analyze |
++| time_horizon | No | "3 years" | Future time period for projections |
+ 
+-- Query generation
+-- Research framework development
++## Workflow Steps
+ 
+-**Settings:**
++### 1. Query Generation (Claude)
+ 
+-- model: Claude 3.5 Sonnet
++Uses Claude to generate 5 focused research queries covering different aspects of the market:
+ 
+-### perplexity
++- Market size and growth
++- Competitive landscape
++- Consumer trends
++- Growth drivers
++- Technology/innovation
+ 
+-- Market research execution
+-- Data gathering
++### 2. Document Setup (Google Docs)
+ 
+-**Settings:**
++Creates a structured document for research collection:
+ 
+-- focus: Web
+-- enable_pro: True
++- Name your google doc with a meaningful name. Consider using the following format: "[Date] - [Topic] - Market Analysis Research"
++- Example: "2024-11-25 - Smart Home Security - Market Analysis Research"
++- Proper formatting for queries and responses (H1 for queries, normal text for responses)
+ 
+-### chatgpt
++### 3. Research Execution (Perplexity)
+ 
+-- Data synthesis
+-- Report generation
++Systematically gathers data for each query:
+ 
+-**Settings:**
++- Captures complete responses using the Copy button at the bottom of the response
++- Maintains organized documentation
+ 
+-- model: GPT-4o
+-- enable_web_search: False
++### 4. Analysis Synthesis (ChatGPT)
+ 
+-### google_docs
++Generates comprehensive market analysis with:
+ 
+-- Research documentation
+-- Report organization
++- Executive Summary
++- Market Overview
++- Strategic Implications
+ 
+-**Settings:**
++## Output Structure
+ 
+-- enable_markdown: True
++The final analysis includes:
+ 
++```markdown
++# Market Analysis Report
++## 1. Executive Summary
++- Market Size and Growth
++- Key Drivers
++- Major Trends
+ 
++## 2. Market Overview
++- Detailed Segmentation
++- Growth Drivers
++- Constraints
+ 
+-## Workflow Steps
+-### Research Query Generation
++## 3. Strategic Implications
++- Market Opportunities
++- Entry Barriers
++- Success Factors
++```
+ 
+-Generate comprehensive research queries using Claude's analytical capabilities
++## Best Practices
+ 
+-**Usage:**
+-1. Create a new conversation with Claude
+-2. Use the provided prompt template
+-3. Review and refine generated queries
++1. Query Generation
++   - Review and refine queries before execution
++   - Ensure coverage of all key market aspects
+ 
++2. Document Organization
++   - Double-check formatting after each paste
++   - Add clear section breaks between queries
++   - Maintain consistent heading hierarchy
+ 
+-**Note:** Ensure queries cover market size, competitors, trends, consumer behavior, and technology/innovation aspects
++3. Research Execution
++   - Let Perplexity complete its response fully
++   - Verify data point consistency
+ 
+-### Research Document Setup
++4. Analysis Synthesis
++   - Review all data before synthesis
++   - Ensure data points are properly referenced
++   - Maintain logical flow in analysis
+ 
+-Create and format Google Doc for research documentation
++## Tool Requirements
+ 
+-**Usage:**
+-1. Create new Google Doc
+-2. Set title format: "[Current Date] - [Target Market] - Market Analysis Research"
+-   Example: "2024-11-25 - Smart Home Security - Market Analysis Research"
+-3. For each query from previous step:
+-   a. Paste query text
+-   b. Format as Heading 1
+-   c. Press Enter twice to leave space for response
+-   d. Ensure normal text formatting is set for response area
++### Claude
+ 
++- Model: Claude 3.5 Sonnet
++- Purpose: Query generation
++- Key setting: None required
+ 
+-**Note:** Double-check formatting settings after each query addition
++### Perplexity
+ 
+-### Research Data Collection
++- Focus: Web
++- Pro account: Recommended
++- Purpose: Research execution
+ 
+-Execute research queries and document findings
++### ChatGPT
+ 
+-**Usage:**
+-For each research query in the Google Doc:
+-1. Copy query text
+-2. Execute in Perplexity
+-3. Wait for complete response
+-4. Click 'Copy' button in Perplexity response
+-5. Return to Google Doc
+-6. Paste response under corresponding query heading
+-7. Add blank line before next query section
++- Model: GPT-4
++- Purpose: Analysis synthesis
++- Web search: Not required
+ 
++### Google Docs
+ 
+-### Report Generation
++- Purpose: Research documentation
++- Settings: Markdown support enabled
+ 
+-Synthesize research findings into comprehensive market analysis
++## Troubleshooting
+ 
+-**Usage:**
+-1. Upload research PDF to ChatGPT
+-2. Use the provided analysis prompt
+-3. Review output for completeness
++Common issues and solutions:
+ 
++1. **Formatting issues in Google Docs**
++   - Make sure the style is set to "Normal text" before pasting.
++   - Tools | Prefences | Enable Markdown
++   - Edit | Past as Markdown
+ 
+-**Note:** Ensure all data points are properly referenced in the final report
++2. **Inconsistent data points**
++   - Solution: Cross-reference across multiple queries
++   - Prevention: Include date ranges in queries
+ 
+-## Tips
++## Recipe Variations
+ 
+-- Review queries before execution to ensure comprehensive coverage
+-- Double-check formatting in Google Doc after each paste
+-- Let Perplexity fully complete its response before copying
+-- Review the full research document before running the synthesis
++1. **Quick Analysis**
++   - Reduce queries to 3 key aspects
++   - Focus on high-level metrics
++   - Use shorter time horizons
+ 
+-## Examples
++2. **Deep Dive**
++   - Add competitor-specific queries
++   - Include patent/technology analysis
++   - Expand regional coverage
+ 
+-### Example Usage
++## Credits
+ 
+-Parameters:
+-```yaml
+-target_market: US smart home security market
+-time_horizon: 2024-2027
+-```
++## Support
++
++For issues or suggestions:
++
++1. Use GitHub Issues for bugs/feature requests
++2. Use GitHub Discussions for usage questions
++3. Check existing discussions before posting
+ 
+-Sample Queries:
+-- What is the total market size of the US smart home security systems industry in 2024, including DIY and professional segments, and what are the projected growth rates through 2027?
+-- Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings.
++## License
+ 
++MIT License - Feel free to modify and reuse
+diff --git a/recipes/yaniv-golan/market-analysis/recipe.yaml b/recipes/yaniv-golan/market-analysis/recipe.yaml
+index 5328c70..591a1bf 100644
+--- a/recipes/yaniv-golan/market-analysis/recipe.yaml
++++ b/recipes/yaniv-golan/market-analysis/recipe.yaml
+@@ -17,8 +17,8 @@ parameters:
+   - name: time_horizon
+     description: "Future time period for projections"
+     required: false
+-    default: "3 years"
+-    example: "2024-2027"
++    default: "2 years"
++    example: "2024-2026"
+ 
+ tools:
+   claude:
+@@ -192,4 +192,4 @@ examples:
+       time_horizon: "2024-2027"
+     sample_queries:
+       - "What is the total market size of the US smart home security systems industry in 2024, including DIY and professional segments, and what are the projected growth rates through 2027?"
+-      - "Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings."
++      - "Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings."
+\ No newline at end of file
+diff --git a/web/package-lock.json b/web/package-lock.json
+index 3bcb224..f5a3d7d 100644
+--- a/web/package-lock.json
++++ b/web/package-lock.json
+@@ -16,6 +16,7 @@
+         "js-yaml": "^4.1.0",
+         "lucide-react": "^0.461.0",
+         "marked": "^15.0.2",
++        "mermaid": "^11.4.0",
+         "react": "^18.2.0",
+         "react-dom": "^18.2.0",
+         "react-router-dom": "^6.28.0",
+@@ -64,6 +65,26 @@
+         "node": ">=6.0.0"
+       }
+     },
++    "node_modules/@antfu/install-pkg": {
++      "version": "0.4.1",
++      "resolved": "https://registry.npmjs.org/@antfu/install-pkg/-/install-pkg-0.4.1.tgz",
++      "integrity": "sha512-T7yB5QNG29afhWVkVq7XeIMBa5U/vs9mX69YqayXypPRmYzUmzwnYltplHmPtZ4HPCn+sQKeXW8I47wCbuBOjw==",
++      "dependencies": {
++        "package-manager-detector": "^0.2.0",
++        "tinyexec": "^0.3.0"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/antfu"
++      }
++    },
++    "node_modules/@antfu/utils": {
++      "version": "0.7.10",
++      "resolved": "https://registry.npmjs.org/@antfu/utils/-/utils-0.7.10.tgz",
++      "integrity": "sha512-+562v9k4aI80m1+VuMHehNJWLOFjBnXn3tdOitzD0il5b7smkSBal4+a3oKiQTbrwMmN/TBUMDvbdoWDehgOww==",
++      "funding": {
++        "url": "https://github.com/sponsors/antfu"
++      }
++    },
+     "node_modules/@babel/code-frame": {
+       "version": "7.26.2",
+       "resolved": "https://registry.npmjs.org/@babel/code-frame/-/code-frame-7.26.2.tgz",
+@@ -336,6 +357,45 @@
+         "node": ">=6.9.0"
+       }
+     },
++    "node_modules/@braintree/sanitize-url": {
++      "version": "7.1.0",
++      "resolved": "https://registry.npmjs.org/@braintree/sanitize-url/-/sanitize-url-7.1.0.tgz",
++      "integrity": "sha512-o+UlMLt49RvtCASlOMW0AkHnabN9wR9rwCCherxO0yG4Npy34GkvrAqdXQvrhNs+jh+gkK8gB8Lf05qL/O7KWg=="
++    },
++    "node_modules/@chevrotain/cst-dts-gen": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/@chevrotain/cst-dts-gen/-/cst-dts-gen-11.0.3.tgz",
++      "integrity": "sha512-BvIKpRLeS/8UbfxXxgC33xOumsacaeCKAjAeLyOn7Pcp95HiRbrpl14S+9vaZLolnbssPIUuiUd8IvgkRyt6NQ==",
++      "dependencies": {
++        "@chevrotain/gast": "11.0.3",
++        "@chevrotain/types": "11.0.3",
++        "lodash-es": "4.17.21"
++      }
++    },
++    "node_modules/@chevrotain/gast": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/@chevrotain/gast/-/gast-11.0.3.tgz",
++      "integrity": "sha512-+qNfcoNk70PyS/uxmj3li5NiECO+2YKZZQMbmjTqRI3Qchu8Hig/Q9vgkHpI3alNjr7M+a2St5pw5w5F6NL5/Q==",
++      "dependencies": {
++        "@chevrotain/types": "11.0.3",
++        "lodash-es": "4.17.21"
++      }
++    },
++    "node_modules/@chevrotain/regexp-to-ast": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/@chevrotain/regexp-to-ast/-/regexp-to-ast-11.0.3.tgz",
++      "integrity": "sha512-1fMHaBZxLFvWI067AVbGJav1eRY7N8DDvYCTwGBiE/ytKBgP8azTdgyrKyWZ9Mfh09eHWb5PgTSO8wi7U824RA=="
++    },
++    "node_modules/@chevrotain/types": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/@chevrotain/types/-/types-11.0.3.tgz",
++      "integrity": "sha512-gsiM3G8b58kZC2HaWR50gu6Y1440cHiJ+i3JUvcp/35JchYejb2+5MVeJK0iKThYpAa/P2PYFV4hoi44HD+aHQ=="
++    },
++    "node_modules/@chevrotain/utils": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/@chevrotain/utils/-/utils-11.0.3.tgz",
++      "integrity": "sha512-YslZMgtJUyuMbZ+aKvfF3x1f5liK4mWNxghFRv7jqRR9C3R3fAOGTTKvxXDa2Y1s9zSbcpuO0cAxDYsc9SrXoQ=="
++    },
+     "node_modules/@esbuild/aix-ppc64": {
+       "version": "0.21.5",
+       "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.21.5.tgz",
+@@ -857,6 +917,25 @@
+       "deprecated": "Use @eslint/object-schema instead",
+       "dev": true
+     },
++    "node_modules/@iconify/types": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/@iconify/types/-/types-2.0.0.tgz",
++      "integrity": "sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg=="
++    },
++    "node_modules/@iconify/utils": {
++      "version": "2.1.33",
++      "resolved": "https://registry.npmjs.org/@iconify/utils/-/utils-2.1.33.tgz",
++      "integrity": "sha512-jP9h6v/g0BIZx0p7XGJJVtkVnydtbgTgt9mVNcGDYwaa7UhdHdI9dvoq+gKj9sijMSJKxUPEG2JyjsgXjxL7Kw==",
++      "dependencies": {
++        "@antfu/install-pkg": "^0.4.0",
++        "@antfu/utils": "^0.7.10",
++        "@iconify/types": "^2.0.0",
++        "debug": "^4.3.6",
++        "kolorist": "^1.8.0",
++        "local-pkg": "^0.5.0",
++        "mlly": "^1.7.1"
++      }
++    },
+     "node_modules/@isaacs/cliui": {
+       "version": "8.0.2",
+       "resolved": "https://registry.npmjs.org/@isaacs/cliui/-/cliui-8.0.2.tgz",
+@@ -941,6 +1020,14 @@
+         "@jridgewell/sourcemap-codec": "^1.4.14"
+       }
+     },
++    "node_modules/@mermaid-js/parser": {
++      "version": "0.3.0",
++      "resolved": "https://registry.npmjs.org/@mermaid-js/parser/-/parser-0.3.0.tgz",
++      "integrity": "sha512-HsvL6zgE5sUPGgkIDlmAWR1HTNHz2Iy11BAWPTa4Jjabkpguy4Ze2gzfLrg6pdRuBvFwgUYyxiaNqZwrEEXepA==",
++      "dependencies": {
++        "langium": "3.0.0"
++      }
++    },
+     "node_modules/@nodelib/fs.scandir": {
+       "version": "2.1.5",
+       "resolved": "https://registry.npmjs.org/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz",
+@@ -1322,12 +1409,248 @@
+         "@babel/types": "^7.20.7"
+       }
+     },
++    "node_modules/@types/d3": {
++      "version": "7.4.3",
++      "resolved": "https://registry.npmjs.org/@types/d3/-/d3-7.4.3.tgz",
++      "integrity": "sha512-lZXZ9ckh5R8uiFVt8ogUNf+pIrK4EsWrx2Np75WvF/eTpJ0FMHNhjXk8CKEx/+gpHbNQyJWehbFaTvqmHWB3ww==",
++      "dependencies": {
++        "@types/d3-array": "*",
++        "@types/d3-axis": "*",
++        "@types/d3-brush": "*",
++        "@types/d3-chord": "*",
++        "@types/d3-color": "*",
++        "@types/d3-contour": "*",
++        "@types/d3-delaunay": "*",
++        "@types/d3-dispatch": "*",
++        "@types/d3-drag": "*",
++        "@types/d3-dsv": "*",
++        "@types/d3-ease": "*",
++        "@types/d3-fetch": "*",
++        "@types/d3-force": "*",
++        "@types/d3-format": "*",
++        "@types/d3-geo": "*",
++        "@types/d3-hierarchy": "*",
++        "@types/d3-interpolate": "*",
++        "@types/d3-path": "*",
++        "@types/d3-polygon": "*",
++        "@types/d3-quadtree": "*",
++        "@types/d3-random": "*",
++        "@types/d3-scale": "*",
++        "@types/d3-scale-chromatic": "*",
++        "@types/d3-selection": "*",
++        "@types/d3-shape": "*",
++        "@types/d3-time": "*",
++        "@types/d3-time-format": "*",
++        "@types/d3-timer": "*",
++        "@types/d3-transition": "*",
++        "@types/d3-zoom": "*"
++      }
++    },
++    "node_modules/@types/d3-array": {
++      "version": "3.2.1",
++      "resolved": "https://registry.npmjs.org/@types/d3-array/-/d3-array-3.2.1.tgz",
++      "integrity": "sha512-Y2Jn2idRrLzUfAKV2LyRImR+y4oa2AntrgID95SHJxuMUrkNXmanDSed71sRNZysveJVt1hLLemQZIady0FpEg=="
++    },
++    "node_modules/@types/d3-axis": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-axis/-/d3-axis-3.0.6.tgz",
++      "integrity": "sha512-pYeijfZuBd87T0hGn0FO1vQ/cgLk6E1ALJjfkC0oJ8cbwkZl3TpgS8bVBLZN+2jjGgg38epgxb2zmoGtSfvgMw==",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-brush": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-brush/-/d3-brush-3.0.6.tgz",
++      "integrity": "sha512-nH60IZNNxEcrh6L1ZSMNA28rj27ut/2ZmI3r96Zd+1jrZD++zD3LsMIjWlvg4AYrHn/Pqz4CF3veCxGjtbqt7A==",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-chord": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-chord/-/d3-chord-3.0.6.tgz",
++      "integrity": "sha512-LFYWWd8nwfwEmTZG9PfQxd17HbNPksHBiJHaKuY1XeqscXacsS2tyoo6OdRsjf+NQYeB6XrNL3a25E3gH69lcg=="
++    },
++    "node_modules/@types/d3-color": {
++      "version": "3.1.3",
++      "resolved": "https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz",
++      "integrity": "sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A=="
++    },
++    "node_modules/@types/d3-contour": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-contour/-/d3-contour-3.0.6.tgz",
++      "integrity": "sha512-BjzLgXGnCWjUSYGfH1cpdo41/hgdWETu4YxpezoztawmqsvCeep+8QGfiY6YbDvfgHz/DkjeIkkZVJavB4a3rg==",
++      "dependencies": {
++        "@types/d3-array": "*",
++        "@types/geojson": "*"
++      }
++    },
++    "node_modules/@types/d3-delaunay": {
++      "version": "6.0.4",
++      "resolved": "https://registry.npmjs.org/@types/d3-delaunay/-/d3-delaunay-6.0.4.tgz",
++      "integrity": "sha512-ZMaSKu4THYCU6sV64Lhg6qjf1orxBthaC161plr5KuPHo3CNm8DTHiLw/5Eq2b6TsNP0W0iJrUOFscY6Q450Hw=="
++    },
++    "node_modules/@types/d3-dispatch": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-dispatch/-/d3-dispatch-3.0.6.tgz",
++      "integrity": "sha512-4fvZhzMeeuBJYZXRXrRIQnvUYfyXwYmLsdiN7XXmVNQKKw1cM8a5WdID0g1hVFZDqT9ZqZEY5pD44p24VS7iZQ=="
++    },
++    "node_modules/@types/d3-drag": {
++      "version": "3.0.7",
++      "resolved": "https://registry.npmjs.org/@types/d3-drag/-/d3-drag-3.0.7.tgz",
++      "integrity": "sha512-HE3jVKlzU9AaMazNufooRJ5ZpWmLIoc90A37WU2JMmeq28w1FQqCZswHZ3xR+SuxYftzHq6WU6KJHvqxKzTxxQ==",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-dsv": {
++      "version": "3.0.7",
++      "resolved": "https://registry.npmjs.org/@types/d3-dsv/-/d3-dsv-3.0.7.tgz",
++      "integrity": "sha512-n6QBF9/+XASqcKK6waudgL0pf/S5XHPPI8APyMLLUHd8NqouBGLsU8MgtO7NINGtPBtk9Kko/W4ea0oAspwh9g=="
++    },
++    "node_modules/@types/d3-ease": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/@types/d3-ease/-/d3-ease-3.0.2.tgz",
++      "integrity": "sha512-NcV1JjO5oDzoK26oMzbILE6HW7uVXOHLQvHshBUW4UMdZGfiY6v5BeQwh9a9tCzv+CeefZQHJt5SRgK154RtiA=="
++    },
++    "node_modules/@types/d3-fetch": {
++      "version": "3.0.7",
++      "resolved": "https://registry.npmjs.org/@types/d3-fetch/-/d3-fetch-3.0.7.tgz",
++      "integrity": "sha512-fTAfNmxSb9SOWNB9IoG5c8Hg6R+AzUHDRlsXsDZsNp6sxAEOP0tkP3gKkNSO/qmHPoBFTxNrjDprVHDQDvo5aA==",
++      "dependencies": {
++        "@types/d3-dsv": "*"
++      }
++    },
++    "node_modules/@types/d3-force": {
++      "version": "3.0.10",
++      "resolved": "https://registry.npmjs.org/@types/d3-force/-/d3-force-3.0.10.tgz",
++      "integrity": "sha512-ZYeSaCF3p73RdOKcjj+swRlZfnYpK1EbaDiYICEEp5Q6sUiqFaFQ9qgoshp5CzIyyb/yD09kD9o2zEltCexlgw=="
++    },
++    "node_modules/@types/d3-format": {
++      "version": "3.0.4",
++      "resolved": "https://registry.npmjs.org/@types/d3-format/-/d3-format-3.0.4.tgz",
++      "integrity": "sha512-fALi2aI6shfg7vM5KiR1wNJnZ7r6UuggVqtDA+xiEdPZQwy/trcQaHnwShLuLdta2rTymCNpxYTiMZX/e09F4g=="
++    },
++    "node_modules/@types/d3-geo": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/@types/d3-geo/-/d3-geo-3.1.0.tgz",
++      "integrity": "sha512-856sckF0oP/diXtS4jNsiQw/UuK5fQG8l/a9VVLeSouf1/PPbBE1i1W852zVwKwYCBkFJJB7nCFTbk6UMEXBOQ==",
++      "dependencies": {
++        "@types/geojson": "*"
++      }
++    },
++    "node_modules/@types/d3-hierarchy": {
++      "version": "3.1.7",
++      "resolved": "https://registry.npmjs.org/@types/d3-hierarchy/-/d3-hierarchy-3.1.7.tgz",
++      "integrity": "sha512-tJFtNoYBtRtkNysX1Xq4sxtjK8YgoWUNpIiUee0/jHGRwqvzYxkq0hGVbbOGSz+JgFxxRu4K8nb3YpG3CMARtg=="
++    },
++    "node_modules/@types/d3-interpolate": {
++      "version": "3.0.4",
++      "resolved": "https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz",
++      "integrity": "sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA==",
++      "dependencies": {
++        "@types/d3-color": "*"
++      }
++    },
++    "node_modules/@types/d3-path": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/@types/d3-path/-/d3-path-3.1.0.tgz",
++      "integrity": "sha512-P2dlU/q51fkOc/Gfl3Ul9kicV7l+ra934qBFXCFhrZMOL6du1TM0pm1ThYvENukyOn5h9v+yMJ9Fn5JK4QozrQ=="
++    },
++    "node_modules/@types/d3-polygon": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/@types/d3-polygon/-/d3-polygon-3.0.2.tgz",
++      "integrity": "sha512-ZuWOtMaHCkN9xoeEMr1ubW2nGWsp4nIql+OPQRstu4ypeZ+zk3YKqQT0CXVe/PYqrKpZAi+J9mTs05TKwjXSRA=="
++    },
++    "node_modules/@types/d3-quadtree": {
++      "version": "3.0.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-quadtree/-/d3-quadtree-3.0.6.tgz",
++      "integrity": "sha512-oUzyO1/Zm6rsxKRHA1vH0NEDG58HrT5icx/azi9MF1TWdtttWl0UIUsjEQBBh+SIkrpd21ZjEv7ptxWys1ncsg=="
++    },
++    "node_modules/@types/d3-random": {
++      "version": "3.0.3",
++      "resolved": "https://registry.npmjs.org/@types/d3-random/-/d3-random-3.0.3.tgz",
++      "integrity": "sha512-Imagg1vJ3y76Y2ea0871wpabqp613+8/r0mCLEBfdtqC7xMSfj9idOnmBYyMoULfHePJyxMAw3nWhJxzc+LFwQ=="
++    },
++    "node_modules/@types/d3-scale": {
++      "version": "4.0.8",
++      "resolved": "https://registry.npmjs.org/@types/d3-scale/-/d3-scale-4.0.8.tgz",
++      "integrity": "sha512-gkK1VVTr5iNiYJ7vWDI+yUFFlszhNMtVeneJ6lUTKPjprsvLLI9/tgEGiXJOnlINJA8FyA88gfnQsHbybVZrYQ==",
++      "dependencies": {
++        "@types/d3-time": "*"
++      }
++    },
++    "node_modules/@types/d3-scale-chromatic": {
++      "version": "3.0.3",
++      "resolved": "https://registry.npmjs.org/@types/d3-scale-chromatic/-/d3-scale-chromatic-3.0.3.tgz",
++      "integrity": "sha512-laXM4+1o5ImZv3RpFAsTRn3TEkzqkytiOY0Dz0sq5cnd1dtNlk6sHLon4OvqaiJb28T0S/TdsBI3Sjsy+keJrw=="
++    },
++    "node_modules/@types/d3-selection": {
++      "version": "3.0.11",
++      "resolved": "https://registry.npmjs.org/@types/d3-selection/-/d3-selection-3.0.11.tgz",
++      "integrity": "sha512-bhAXu23DJWsrI45xafYpkQ4NtcKMwWnAC/vKrd2l+nxMFuvOT3XMYTIj2opv8vq8AO5Yh7Qac/nSeP/3zjTK0w=="
++    },
++    "node_modules/@types/d3-shape": {
++      "version": "3.1.6",
++      "resolved": "https://registry.npmjs.org/@types/d3-shape/-/d3-shape-3.1.6.tgz",
++      "integrity": "sha512-5KKk5aKGu2I+O6SONMYSNflgiP0WfZIQvVUMan50wHsLG1G94JlxEVnCpQARfTtzytuY0p/9PXXZb3I7giofIA==",
++      "dependencies": {
++        "@types/d3-path": "*"
++      }
++    },
++    "node_modules/@types/d3-time": {
++      "version": "3.0.4",
++      "resolved": "https://registry.npmjs.org/@types/d3-time/-/d3-time-3.0.4.tgz",
++      "integrity": "sha512-yuzZug1nkAAaBlBBikKZTgzCeA+k1uy4ZFwWANOfKw5z5LRhV0gNA7gNkKm7HoK+HRN0wX3EkxGk0fpbWhmB7g=="
++    },
++    "node_modules/@types/d3-time-format": {
++      "version": "4.0.3",
++      "resolved": "https://registry.npmjs.org/@types/d3-time-format/-/d3-time-format-4.0.3.tgz",
++      "integrity": "sha512-5xg9rC+wWL8kdDj153qZcsJ0FWiFt0J5RB6LYUNZjwSnesfblqrI/bJ1wBdJ8OQfncgbJG5+2F+qfqnqyzYxyg=="
++    },
++    "node_modules/@types/d3-timer": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/@types/d3-timer/-/d3-timer-3.0.2.tgz",
++      "integrity": "sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw=="
++    },
++    "node_modules/@types/d3-transition": {
++      "version": "3.0.9",
++      "resolved": "https://registry.npmjs.org/@types/d3-transition/-/d3-transition-3.0.9.tgz",
++      "integrity": "sha512-uZS5shfxzO3rGlu0cC3bjmMFKsXv+SmZZcgp0KD22ts4uGXp5EVYGzu/0YdwZeKmddhcAccYtREJKkPfXkZuCg==",
++      "dependencies": {
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/d3-zoom": {
++      "version": "3.0.8",
++      "resolved": "https://registry.npmjs.org/@types/d3-zoom/-/d3-zoom-3.0.8.tgz",
++      "integrity": "sha512-iqMC4/YlFCSlO8+2Ii1GGGliCAY4XdeG748w5vQUbevlbDu0zSjH/+jojorQVBK/se0j6DUFNPBGSqD3YWYnDw==",
++      "dependencies": {
++        "@types/d3-interpolate": "*",
++        "@types/d3-selection": "*"
++      }
++    },
++    "node_modules/@types/dompurify": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/@types/dompurify/-/dompurify-3.2.0.tgz",
++      "integrity": "sha512-Fgg31wv9QbLDA0SpTOXO3MaxySc4DKGLi8sna4/Utjo4r3ZRPdCt4UQee8BWr+Q5z21yifghREPJGYaEOEIACg==",
++      "deprecated": "This is a stub types definition. dompurify provides its own type definitions, so you do not need this installed.",
++      "dependencies": {
++        "dompurify": "*"
++      }
++    },
+     "node_modules/@types/estree": {
+       "version": "1.0.6",
+       "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.6.tgz",
+       "integrity": "sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==",
+       "dev": true
+     },
++    "node_modules/@types/geojson": {
++      "version": "7946.0.14",
++      "resolved": "https://registry.npmjs.org/@types/geojson/-/geojson-7946.0.14.tgz",
++      "integrity": "sha512-WCfD5Ht3ZesJUsONdhvm84dmzWOiOzOAqOncN0++w0lBw1o8OuDNJF2McvvCef/yBqb/HYRahp1BYtODFQ8bRg=="
++    },
+     "node_modules/@types/js-yaml": {
+       "version": "4.0.9",
+       "resolved": "https://registry.npmjs.org/@types/js-yaml/-/js-yaml-4.0.9.tgz",
+@@ -1599,7 +1922,6 @@
+       "version": "8.14.0",
+       "resolved": "https://registry.npmjs.org/acorn/-/acorn-8.14.0.tgz",
+       "integrity": "sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA==",
+-      "dev": true,
+       "bin": {
+         "acorn": "bin/acorn"
+       },
+@@ -1847,6 +2169,30 @@
+         "url": "https://github.com/chalk/chalk?sponsor=1"
+       }
+     },
++    "node_modules/chevrotain": {
++      "version": "11.0.3",
++      "resolved": "https://registry.npmjs.org/chevrotain/-/chevrotain-11.0.3.tgz",
++      "integrity": "sha512-ci2iJH6LeIkvP9eJW6gpueU8cnZhv85ELY8w8WiFtNjMHA5ad6pQLaJo9mEly/9qUyCpvqX8/POVUTf18/HFdw==",
++      "dependencies": {
++        "@chevrotain/cst-dts-gen": "11.0.3",
++        "@chevrotain/gast": "11.0.3",
++        "@chevrotain/regexp-to-ast": "11.0.3",
++        "@chevrotain/types": "11.0.3",
++        "@chevrotain/utils": "11.0.3",
++        "lodash-es": "4.17.21"
++      }
++    },
++    "node_modules/chevrotain-allstar": {
++      "version": "0.3.1",
++      "resolved": "https://registry.npmjs.org/chevrotain-allstar/-/chevrotain-allstar-0.3.1.tgz",
++      "integrity": "sha512-b7g+y9A0v4mxCW1qUhf3BSVPg+/NvGErk/dOkrDaHA0nQIQGAtrOjlX//9OQtRlSCy+x9rfB5N8yC71lH1nvMw==",
++      "dependencies": {
++        "lodash-es": "^4.17.21"
++      },
++      "peerDependencies": {
++        "chevrotain": "^11.0.0"
++      }
++    },
+     "node_modules/chokidar": {
+       "version": "3.6.0",
+       "resolved": "https://registry.npmjs.org/chokidar/-/chokidar-3.6.0.tgz",
+@@ -1938,12 +2284,25 @@
+       "integrity": "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==",
+       "dev": true
+     },
++    "node_modules/confbox": {
++      "version": "0.1.8",
++      "resolved": "https://registry.npmjs.org/confbox/-/confbox-0.1.8.tgz",
++      "integrity": "sha512-RMtmw0iFkeR4YV+fUOSucriAQNb9g8zFR52MWCtl+cCZOFRNL6zeB395vPzFhEjjn4fMxXudmELnl/KF/WrK6w=="
++    },
+     "node_modules/convert-source-map": {
+       "version": "2.0.0",
+       "resolved": "https://registry.npmjs.org/convert-source-map/-/convert-source-map-2.0.0.tgz",
+       "integrity": "sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==",
+       "dev": true
+     },
++    "node_modules/cose-base": {
++      "version": "1.0.3",
++      "resolved": "https://registry.npmjs.org/cose-base/-/cose-base-1.0.3.tgz",
++      "integrity": "sha512-s9whTXInMSgAp/NVXVNuVxVKzGH2qck3aQlVHxDCdAEPgtMKwc4Wq6/QKhgdEdgbLSi9rBTAcPoRa6JpiG4ksg==",
++      "dependencies": {
++        "layout-base": "^1.0.0"
++      }
++    },
+     "node_modules/cross-spawn": {
+       "version": "7.0.6",
+       "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+@@ -1974,11 +2333,480 @@
+       "integrity": "sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==",
+       "devOptional": true
+     },
++    "node_modules/cytoscape": {
++      "version": "3.30.4",
++      "resolved": "https://registry.npmjs.org/cytoscape/-/cytoscape-3.30.4.tgz",
++      "integrity": "sha512-OxtlZwQl1WbwMmLiyPSEBuzeTIQnwZhJYYWFzZ2PhEHVFwpeaqNIkUzSiso00D98qk60l8Gwon2RP304d3BJ1A==",
++      "engines": {
++        "node": ">=0.10"
++      }
++    },
++    "node_modules/cytoscape-cose-bilkent": {
++      "version": "4.1.0",
++      "resolved": "https://registry.npmjs.org/cytoscape-cose-bilkent/-/cytoscape-cose-bilkent-4.1.0.tgz",
++      "integrity": "sha512-wgQlVIUJF13Quxiv5e1gstZ08rnZj2XaLHGoFMYXz7SkNfCDOOteKBE6SYRfA9WxxI/iBc3ajfDoc6hb/MRAHQ==",
++      "dependencies": {
++        "cose-base": "^1.0.0"
++      },
++      "peerDependencies": {
++        "cytoscape": "^3.2.0"
++      }
++    },
++    "node_modules/cytoscape-fcose": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/cytoscape-fcose/-/cytoscape-fcose-2.2.0.tgz",
++      "integrity": "sha512-ki1/VuRIHFCzxWNrsshHYPs6L7TvLu3DL+TyIGEsRcvVERmxokbf5Gdk7mFxZnTdiGtnA4cfSmjZJMviqSuZrQ==",
++      "dependencies": {
++        "cose-base": "^2.2.0"
++      },
++      "peerDependencies": {
++        "cytoscape": "^3.2.0"
++      }
++    },
++    "node_modules/cytoscape-fcose/node_modules/cose-base": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/cose-base/-/cose-base-2.2.0.tgz",
++      "integrity": "sha512-AzlgcsCbUMymkADOJtQm3wO9S3ltPfYOFD5033keQn9NJzIbtnZj+UdBJe7DYml/8TdbtHJW3j58SOnKhWY/5g==",
++      "dependencies": {
++        "layout-base": "^2.0.0"
++      }
++    },
++    "node_modules/cytoscape-fcose/node_modules/layout-base": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/layout-base/-/layout-base-2.0.1.tgz",
++      "integrity": "sha512-dp3s92+uNI1hWIpPGH3jK2kxE2lMjdXdr+DH8ynZHpd6PUlH6x6cbuXnoMmiNumznqaNO31xu9e79F0uuZ0JFg=="
++    },
++    "node_modules/d3": {
++      "version": "7.9.0",
++      "resolved": "https://registry.npmjs.org/d3/-/d3-7.9.0.tgz",
++      "integrity": "sha512-e1U46jVP+w7Iut8Jt8ri1YsPOvFpg46k+K8TpCb0P+zjCkjkPnV7WzfDJzMHy1LnA+wj5pLT1wjO901gLXeEhA==",
++      "dependencies": {
++        "d3-array": "3",
++        "d3-axis": "3",
++        "d3-brush": "3",
++        "d3-chord": "3",
++        "d3-color": "3",
++        "d3-contour": "4",
++        "d3-delaunay": "6",
++        "d3-dispatch": "3",
++        "d3-drag": "3",
++        "d3-dsv": "3",
++        "d3-ease": "3",
++        "d3-fetch": "3",
++        "d3-force": "3",
++        "d3-format": "3",
++        "d3-geo": "3",
++        "d3-hierarchy": "3",
++        "d3-interpolate": "3",
++        "d3-path": "3",
++        "d3-polygon": "3",
++        "d3-quadtree": "3",
++        "d3-random": "3",
++        "d3-scale": "4",
++        "d3-scale-chromatic": "3",
++        "d3-selection": "3",
++        "d3-shape": "3",
++        "d3-time": "3",
++        "d3-time-format": "4",
++        "d3-timer": "3",
++        "d3-transition": "3",
++        "d3-zoom": "3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-array": {
++      "version": "3.2.4",
++      "resolved": "https://registry.npmjs.org/d3-array/-/d3-array-3.2.4.tgz",
++      "integrity": "sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==",
++      "dependencies": {
++        "internmap": "1 - 2"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-axis": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-axis/-/d3-axis-3.0.0.tgz",
++      "integrity": "sha512-IH5tgjV4jE/GhHkRV0HiVYPDtvfjHQlQfJHs0usq7M30XcSBvOotpmH1IgkcXsO/5gEQZD43B//fc7SRT5S+xw==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-brush": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-brush/-/d3-brush-3.0.0.tgz",
++      "integrity": "sha512-ALnjWlVYkXsVIGlOsuWH1+3udkYFI48Ljihfnh8FZPF2QS9o+PzGLBslO0PjzVoHLZ2KCVgAM8NVkXPJB2aNnQ==",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-drag": "2 - 3",
++        "d3-interpolate": "1 - 3",
++        "d3-selection": "3",
++        "d3-transition": "3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-chord": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-chord/-/d3-chord-3.0.1.tgz",
++      "integrity": "sha512-VE5S6TNa+j8msksl7HwjxMHDM2yNK3XCkusIlpX5kwauBfXuyLAtNg9jCp/iHH61tgI4sb6R/EIMWCqEIdjT/g==",
++      "dependencies": {
++        "d3-path": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-color": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz",
++      "integrity": "sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-contour": {
++      "version": "4.0.2",
++      "resolved": "https://registry.npmjs.org/d3-contour/-/d3-contour-4.0.2.tgz",
++      "integrity": "sha512-4EzFTRIikzs47RGmdxbeUvLWtGedDUNkTcmzoeyg4sP/dvCexO47AaQL7VKy/gul85TOxw+IBgA8US2xwbToNA==",
++      "dependencies": {
++        "d3-array": "^3.2.0"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-delaunay": {
++      "version": "6.0.4",
++      "resolved": "https://registry.npmjs.org/d3-delaunay/-/d3-delaunay-6.0.4.tgz",
++      "integrity": "sha512-mdjtIZ1XLAM8bm/hx3WwjfHt6Sggek7qH043O8KEjDXN40xi3vx/6pYSVTwLjEgiXQTbvaouWKynLBiUZ6SK6A==",
++      "dependencies": {
++        "delaunator": "5"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-dispatch": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-dispatch/-/d3-dispatch-3.0.1.tgz",
++      "integrity": "sha512-rzUyPU/S7rwUflMyLc1ETDeBj0NRuHKKAcvukozwhshr6g6c5d8zh4c2gQjY2bZ0dXeGLWc1PF174P2tVvKhfg==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-drag": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-drag/-/d3-drag-3.0.0.tgz",
++      "integrity": "sha512-pWbUJLdETVA8lQNJecMxoXfH6x+mO2UQo8rSmZ+QqxcbyA3hfeprFgIT//HW2nlHChWeIIMwS2Fq+gEARkhTkg==",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-selection": "3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-dsv": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-dsv/-/d3-dsv-3.0.1.tgz",
++      "integrity": "sha512-UG6OvdI5afDIFP9w4G0mNq50dSOsXHJaRE8arAS5o9ApWnIElp8GZw1Dun8vP8OyHOZ/QJUKUJwxiiCCnUwm+Q==",
++      "dependencies": {
++        "commander": "7",
++        "iconv-lite": "0.6",
++        "rw": "1"
++      },
++      "bin": {
++        "csv2json": "bin/dsv2json.js",
++        "csv2tsv": "bin/dsv2dsv.js",
++        "dsv2dsv": "bin/dsv2dsv.js",
++        "dsv2json": "bin/dsv2json.js",
++        "json2csv": "bin/json2dsv.js",
++        "json2dsv": "bin/json2dsv.js",
++        "json2tsv": "bin/json2dsv.js",
++        "tsv2csv": "bin/dsv2dsv.js",
++        "tsv2json": "bin/dsv2json.js"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-dsv/node_modules/commander": {
++      "version": "7.2.0",
++      "resolved": "https://registry.npmjs.org/commander/-/commander-7.2.0.tgz",
++      "integrity": "sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==",
++      "engines": {
++        "node": ">= 10"
++      }
++    },
++    "node_modules/d3-ease": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz",
++      "integrity": "sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-fetch": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-fetch/-/d3-fetch-3.0.1.tgz",
++      "integrity": "sha512-kpkQIM20n3oLVBKGg6oHrUchHM3xODkTzjMoj7aWQFq5QEM+R6E4WkzT5+tojDY7yjez8KgCBRoj4aEr99Fdqw==",
++      "dependencies": {
++        "d3-dsv": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-force": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-force/-/d3-force-3.0.0.tgz",
++      "integrity": "sha512-zxV/SsA+U4yte8051P4ECydjD/S+qeYtnaIyAs9tgHCqfguma/aAQDjo85A9Z6EKhBirHRJHXIgJUlffT4wdLg==",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-quadtree": "1 - 3",
++        "d3-timer": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-format": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/d3-format/-/d3-format-3.1.0.tgz",
++      "integrity": "sha512-YyUI6AEuY/Wpt8KWLgZHsIU86atmikuoOmCfommt0LYHiQSPjvX2AcFc38PX0CBpr2RCyZhjex+NS/LPOv6YqA==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-geo": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/d3-geo/-/d3-geo-3.1.1.tgz",
++      "integrity": "sha512-637ln3gXKXOwhalDzinUgY83KzNWZRKbYubaG+fGVuc/dxO64RRljtCTnf5ecMyE1RIdtqpkVcq0IbtU2S8j2Q==",
++      "dependencies": {
++        "d3-array": "2.5.0 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-hierarchy": {
++      "version": "3.1.2",
++      "resolved": "https://registry.npmjs.org/d3-hierarchy/-/d3-hierarchy-3.1.2.tgz",
++      "integrity": "sha512-FX/9frcub54beBdugHjDCdikxThEqjnR93Qt7PvQTOHxyiNCAlvMrHhclk3cD5VeAaq9fxmfRp+CnWw9rEMBuA==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-interpolate": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz",
++      "integrity": "sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g==",
++      "dependencies": {
++        "d3-color": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-path": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/d3-path/-/d3-path-3.1.0.tgz",
++      "integrity": "sha512-p3KP5HCf/bvjBSSKuXid6Zqijx7wIfNW+J/maPs+iwR35at5JCbLUT0LzF1cnjbCHWhqzQTIN2Jpe8pRebIEFQ==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-polygon": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-polygon/-/d3-polygon-3.0.1.tgz",
++      "integrity": "sha512-3vbA7vXYwfe1SYhED++fPUQlWSYTTGmFmQiany/gdbiWgU/iEyQzyymwL9SkJjFFuCS4902BSzewVGsHHmHtXg==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-quadtree": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-quadtree/-/d3-quadtree-3.0.1.tgz",
++      "integrity": "sha512-04xDrxQTDTCFwP5H6hRhsRcb9xxv2RzkcsygFzmkSIOJy3PeRJP7sNk3VRIbKXcog561P9oU0/rVH6vDROAgUw==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-random": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-random/-/d3-random-3.0.1.tgz",
++      "integrity": "sha512-FXMe9GfxTxqd5D6jFsQ+DJ8BJS4E/fT5mqqdjovykEB2oFbTMDVdg1MGFxfQW+FBOGoB++k8swBrgwSHT1cUXQ==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-sankey": {
++      "version": "0.12.3",
++      "resolved": "https://registry.npmjs.org/d3-sankey/-/d3-sankey-0.12.3.tgz",
++      "integrity": "sha512-nQhsBRmM19Ax5xEIPLMY9ZmJ/cDvd1BG3UVvt5h3WRxKg5zGRbvnteTyWAbzeSvlh3tW7ZEmq4VwR5mB3tutmQ==",
++      "dependencies": {
++        "d3-array": "1 - 2",
++        "d3-shape": "^1.2.0"
++      }
++    },
++    "node_modules/d3-sankey/node_modules/d3-array": {
++      "version": "2.12.1",
++      "resolved": "https://registry.npmjs.org/d3-array/-/d3-array-2.12.1.tgz",
++      "integrity": "sha512-B0ErZK/66mHtEsR1TkPEEkwdy+WDesimkM5gpZr5Dsg54BiTA5RXtYW5qTLIAcekaS9xfZrzBLF/OAkB3Qn1YQ==",
++      "dependencies": {
++        "internmap": "^1.0.0"
++      }
++    },
++    "node_modules/d3-sankey/node_modules/d3-path": {
++      "version": "1.0.9",
++      "resolved": "https://registry.npmjs.org/d3-path/-/d3-path-1.0.9.tgz",
++      "integrity": "sha512-VLaYcn81dtHVTjEHd8B+pbe9yHWpXKZUC87PzoFmsFrJqgFwDe/qxfp5MlfsfM1V5E/iVt0MmEbWQ7FVIXh/bg=="
++    },
++    "node_modules/d3-sankey/node_modules/d3-shape": {
++      "version": "1.3.7",
++      "resolved": "https://registry.npmjs.org/d3-shape/-/d3-shape-1.3.7.tgz",
++      "integrity": "sha512-EUkvKjqPFUAZyOlhY5gzCxCeI0Aep04LwIRpsZ/mLFelJiUfnK56jo5JMDSE7yyP2kLSb6LtF+S5chMk7uqPqw==",
++      "dependencies": {
++        "d3-path": "1"
++      }
++    },
++    "node_modules/d3-sankey/node_modules/internmap": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/internmap/-/internmap-1.0.1.tgz",
++      "integrity": "sha512-lDB5YccMydFBtasVtxnZ3MRBHuaoE8GKsppq+EchKL2U4nK/DmEpPHNH8MZe5HkMtpSiTSOZwfN0tzYjO/lJEw=="
++    },
++    "node_modules/d3-scale": {
++      "version": "4.0.2",
++      "resolved": "https://registry.npmjs.org/d3-scale/-/d3-scale-4.0.2.tgz",
++      "integrity": "sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==",
++      "dependencies": {
++        "d3-array": "2.10.0 - 3",
++        "d3-format": "1 - 3",
++        "d3-interpolate": "1.2.0 - 3",
++        "d3-time": "2.1.1 - 3",
++        "d3-time-format": "2 - 4"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-scale-chromatic": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/d3-scale-chromatic/-/d3-scale-chromatic-3.1.0.tgz",
++      "integrity": "sha512-A3s5PWiZ9YCXFye1o246KoscMWqf8BsD9eRiJ3He7C9OBaxKhAd5TFCdEx/7VbKtxxTsu//1mMJFrEt572cEyQ==",
++      "dependencies": {
++        "d3-color": "1 - 3",
++        "d3-interpolate": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-selection": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-selection/-/d3-selection-3.0.0.tgz",
++      "integrity": "sha512-fmTRWbNMmsmWq6xJV8D19U/gw/bwrHfNXxrIN+HfZgnzqTHp9jOmKMhsTUjXOJnZOdZY9Q28y4yebKzqDKlxlQ==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-shape": {
++      "version": "3.2.0",
++      "resolved": "https://registry.npmjs.org/d3-shape/-/d3-shape-3.2.0.tgz",
++      "integrity": "sha512-SaLBuwGm3MOViRq2ABk3eLoxwZELpH6zhl3FbAoJ7Vm1gofKx6El1Ib5z23NUEhF9AsGl7y+dzLe5Cw2AArGTA==",
++      "dependencies": {
++        "d3-path": "^3.1.0"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-time": {
++      "version": "3.1.0",
++      "resolved": "https://registry.npmjs.org/d3-time/-/d3-time-3.1.0.tgz",
++      "integrity": "sha512-VqKjzBLejbSMT4IgbmVgDjpkYrNWUYJnbCGo874u7MMKIWsILRX+OpX/gTk8MqjpT1A/c6HY2dCA77ZN0lkQ2Q==",
++      "dependencies": {
++        "d3-array": "2 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-time-format": {
++      "version": "4.1.0",
++      "resolved": "https://registry.npmjs.org/d3-time-format/-/d3-time-format-4.1.0.tgz",
++      "integrity": "sha512-dJxPBlzC7NugB2PDLwo9Q8JiTR3M3e4/XANkreKSUxF8vvXKqm1Yfq4Q5dl8budlunRVlUUaDUgFt7eA8D6NLg==",
++      "dependencies": {
++        "d3-time": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-timer": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz",
++      "integrity": "sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/d3-transition": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/d3-transition/-/d3-transition-3.0.1.tgz",
++      "integrity": "sha512-ApKvfjsSR6tg06xrL434C0WydLr7JewBB3V+/39RMHsaXTOG0zmt/OAXeng5M5LBm0ojmxJrpomQVZ1aPvBL4w==",
++      "dependencies": {
++        "d3-color": "1 - 3",
++        "d3-dispatch": "1 - 3",
++        "d3-ease": "1 - 3",
++        "d3-interpolate": "1 - 3",
++        "d3-timer": "1 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      },
++      "peerDependencies": {
++        "d3-selection": "2 - 3"
++      }
++    },
++    "node_modules/d3-zoom": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/d3-zoom/-/d3-zoom-3.0.0.tgz",
++      "integrity": "sha512-b8AmV3kfQaqWAuacbPuNbL6vahnOJflOhexLzMMNLga62+/nh0JzvJ0aO/5a5MVgUFGS7Hu1P9P03o3fJkDCyw==",
++      "dependencies": {
++        "d3-dispatch": "1 - 3",
++        "d3-drag": "2 - 3",
++        "d3-interpolate": "1 - 3",
++        "d3-selection": "2 - 3",
++        "d3-transition": "2 - 3"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/dagre-d3-es": {
++      "version": "7.0.11",
++      "resolved": "https://registry.npmjs.org/dagre-d3-es/-/dagre-d3-es-7.0.11.tgz",
++      "integrity": "sha512-tvlJLyQf834SylNKax8Wkzco/1ias1OPw8DcUMDE7oUIoSEW25riQVuiu/0OWEFqT0cxHT3Pa9/D82Jr47IONw==",
++      "dependencies": {
++        "d3": "^7.9.0",
++        "lodash-es": "^4.17.21"
++      }
++    },
++    "node_modules/dayjs": {
++      "version": "1.11.13",
++      "resolved": "https://registry.npmjs.org/dayjs/-/dayjs-1.11.13.tgz",
++      "integrity": "sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg=="
++    },
+     "node_modules/debug": {
+       "version": "4.3.7",
+       "resolved": "https://registry.npmjs.org/debug/-/debug-4.3.7.tgz",
+       "integrity": "sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==",
+-      "dev": true,
+       "dependencies": {
+         "ms": "^2.1.3"
+       },
+@@ -1997,6 +2825,14 @@
+       "integrity": "sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==",
+       "dev": true
+     },
++    "node_modules/delaunator": {
++      "version": "5.0.1",
++      "resolved": "https://registry.npmjs.org/delaunator/-/delaunator-5.0.1.tgz",
++      "integrity": "sha512-8nvh+XBe96aCESrGOqMp/84b13H9cdKbG5P2ejQCh4d4sK9RL4371qou9drQjMhvnPmhWl5hnmqbEE0fXr9Xnw==",
++      "dependencies": {
++        "robust-predicates": "^3.0.2"
++      }
++    },
+     "node_modules/didyoumean": {
+       "version": "1.2.2",
+       "resolved": "https://registry.npmjs.org/didyoumean/-/didyoumean-1.2.2.tgz",
+@@ -2031,6 +2867,11 @@
+         "node": ">=6.0.0"
+       }
+     },
++    "node_modules/dompurify": {
++      "version": "3.1.6",
++      "resolved": "https://registry.npmjs.org/dompurify/-/dompurify-3.1.6.tgz",
++      "integrity": "sha512-cTOAhc36AalkjtBpfG6O8JimdTMWNXjiePT2xQH/ppBGi/4uIpmj8eKyIkMJErXWARyINV/sB38yf8JCLF5pbQ=="
++    },
+     "node_modules/eastasianwidth": {
+       "version": "0.2.0",
+       "resolved": "https://registry.npmjs.org/eastasianwidth/-/eastasianwidth-0.2.0.tgz",
+@@ -2571,6 +3412,11 @@
+       "integrity": "sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==",
+       "dev": true
+     },
++    "node_modules/hachure-fill": {
++      "version": "0.5.2",
++      "resolved": "https://registry.npmjs.org/hachure-fill/-/hachure-fill-0.5.2.tgz",
++      "integrity": "sha512-3GKBOn+m2LX9iq+JC1064cSFprJY4jL1jCXTcpnfER5HYE2l/4EfWSGzkPa/ZDBmYI0ZOEj5VHV/eKnPGkHuOg=="
++    },
+     "node_modules/has-flag": {
+       "version": "4.0.0",
+       "resolved": "https://registry.npmjs.org/has-flag/-/has-flag-4.0.0.tgz",
+@@ -2599,6 +3445,17 @@
+         "node": ">=12.0.0"
+       }
+     },
++    "node_modules/iconv-lite": {
++      "version": "0.6.3",
++      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.6.3.tgz",
++      "integrity": "sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==",
++      "dependencies": {
++        "safer-buffer": ">= 2.1.2 < 3.0.0"
++      },
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
+     "node_modules/ignore": {
+       "version": "5.3.2",
+       "resolved": "https://registry.npmjs.org/ignore/-/ignore-5.3.2.tgz",
+@@ -2650,6 +3507,14 @@
+       "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
+       "dev": true
+     },
++    "node_modules/internmap": {
++      "version": "2.0.3",
++      "resolved": "https://registry.npmjs.org/internmap/-/internmap-2.0.3.tgz",
++      "integrity": "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==",
++      "engines": {
++        "node": ">=12"
++      }
++    },
+     "node_modules/is-binary-path": {
+       "version": "2.1.0",
+       "resolved": "https://registry.npmjs.org/is-binary-path/-/is-binary-path-2.1.0.tgz",
+@@ -2804,6 +3669,29 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/katex": {
++      "version": "0.16.11",
++      "resolved": "https://registry.npmjs.org/katex/-/katex-0.16.11.tgz",
++      "integrity": "sha512-RQrI8rlHY92OLf3rho/Ts8i/XvjgguEjOkO1BEXcU3N8BqPpSzBNwV/G0Ukr+P/l3ivvJUE/Fa/CwbS6HesGNQ==",
++      "funding": [
++        "https://opencollective.com/katex",
++        "https://github.com/sponsors/katex"
++      ],
++      "dependencies": {
++        "commander": "^8.3.0"
++      },
++      "bin": {
++        "katex": "cli.js"
++      }
++    },
++    "node_modules/katex/node_modules/commander": {
++      "version": "8.3.0",
++      "resolved": "https://registry.npmjs.org/commander/-/commander-8.3.0.tgz",
++      "integrity": "sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==",
++      "engines": {
++        "node": ">= 12"
++      }
++    },
+     "node_modules/keyv": {
+       "version": "4.5.4",
+       "resolved": "https://registry.npmjs.org/keyv/-/keyv-4.5.4.tgz",
+@@ -2813,6 +3701,36 @@
+         "json-buffer": "3.0.1"
+       }
+     },
++    "node_modules/khroma": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/khroma/-/khroma-2.1.0.tgz",
++      "integrity": "sha512-Ls993zuzfayK269Svk9hzpeGUKob/sIgZzyHYdjQoAdQetRKpOLj+k/QQQ/6Qi0Yz65mlROrfd+Ev+1+7dz9Kw=="
++    },
++    "node_modules/kolorist": {
++      "version": "1.8.0",
++      "resolved": "https://registry.npmjs.org/kolorist/-/kolorist-1.8.0.tgz",
++      "integrity": "sha512-Y+60/zizpJ3HRH8DCss+q95yr6145JXZo46OTpFvDZWLfRCE4qChOyk1b26nMaNpfHHgxagk9dXT5OP0Tfe+dQ=="
++    },
++    "node_modules/langium": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/langium/-/langium-3.0.0.tgz",
++      "integrity": "sha512-+Ez9EoiByeoTu/2BXmEaZ06iPNXM6thWJp02KfBO/raSMyCJ4jw7AkWWa+zBCTm0+Tw1Fj9FOxdqSskyN5nAwg==",
++      "dependencies": {
++        "chevrotain": "~11.0.3",
++        "chevrotain-allstar": "~0.3.0",
++        "vscode-languageserver": "~9.0.1",
++        "vscode-languageserver-textdocument": "~1.0.11",
++        "vscode-uri": "~3.0.8"
++      },
++      "engines": {
++        "node": ">=16.0.0"
++      }
++    },
++    "node_modules/layout-base": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/layout-base/-/layout-base-1.0.2.tgz",
++      "integrity": "sha512-8h2oVEZNktL4BH2JCOI90iD1yXwL6iNW7KcCKT2QZgQJR2vbqDsldCTPRU9NifTCqHZci57XvQQ15YTu+sTYPg=="
++    },
+     "node_modules/levn": {
+       "version": "0.4.1",
+       "resolved": "https://registry.npmjs.org/levn/-/levn-0.4.1.tgz",
+@@ -2839,6 +3757,21 @@
+       "resolved": "https://registry.npmjs.org/lines-and-columns/-/lines-and-columns-1.2.4.tgz",
+       "integrity": "sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg=="
+     },
++    "node_modules/local-pkg": {
++      "version": "0.5.1",
++      "resolved": "https://registry.npmjs.org/local-pkg/-/local-pkg-0.5.1.tgz",
++      "integrity": "sha512-9rrA30MRRP3gBD3HTGnC6cDFpaE1kVDWxWgqWJUN0RvDNAo+Nz/9GxB+nHOH0ifbVFy0hSA1V6vFDvnx54lTEQ==",
++      "dependencies": {
++        "mlly": "^1.7.3",
++        "pkg-types": "^1.2.1"
++      },
++      "engines": {
++        "node": ">=14"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/antfu"
++      }
++    },
+     "node_modules/locate-path": {
+       "version": "6.0.0",
+       "resolved": "https://registry.npmjs.org/locate-path/-/locate-path-6.0.0.tgz",
+@@ -2854,6 +3787,11 @@
+         "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
++    "node_modules/lodash-es": {
++      "version": "4.17.21",
++      "resolved": "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz",
++      "integrity": "sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw=="
++    },
+     "node_modules/lodash.castarray": {
+       "version": "4.4.0",
+       "resolved": "https://registry.npmjs.org/lodash.castarray/-/lodash.castarray-4.4.0.tgz",
+@@ -2916,6 +3854,45 @@
+         "node": ">= 8"
+       }
+     },
++    "node_modules/mermaid": {
++      "version": "11.4.0",
++      "resolved": "https://registry.npmjs.org/mermaid/-/mermaid-11.4.0.tgz",
++      "integrity": "sha512-mxCfEYvADJqOiHfGpJXLs4/fAjHz448rH0pfY5fAoxiz70rQiDSzUUy4dNET2T08i46IVpjohPd6WWbzmRHiPA==",
++      "dependencies": {
++        "@braintree/sanitize-url": "^7.0.1",
++        "@iconify/utils": "^2.1.32",
++        "@mermaid-js/parser": "^0.3.0",
++        "@types/d3": "^7.4.3",
++        "@types/dompurify": "^3.0.5",
++        "cytoscape": "^3.29.2",
++        "cytoscape-cose-bilkent": "^4.1.0",
++        "cytoscape-fcose": "^2.2.0",
++        "d3": "^7.9.0",
++        "d3-sankey": "^0.12.3",
++        "dagre-d3-es": "7.0.11",
++        "dayjs": "^1.11.10",
++        "dompurify": "^3.0.11 <3.1.7",
++        "katex": "^0.16.9",
++        "khroma": "^2.1.0",
++        "lodash-es": "^4.17.21",
++        "marked": "^13.0.2",
++        "roughjs": "^4.6.6",
++        "stylis": "^4.3.1",
++        "ts-dedent": "^2.2.0",
++        "uuid": "^9.0.1"
++      }
++    },
++    "node_modules/mermaid/node_modules/marked": {
++      "version": "13.0.3",
++      "resolved": "https://registry.npmjs.org/marked/-/marked-13.0.3.tgz",
++      "integrity": "sha512-rqRix3/TWzE9rIoFGIn8JmsVfhiuC8VIQ8IdX5TfzmeBucdY05/0UlzKaw0eVtpcN/OdVFpBk7CjKGo9iHJ/zA==",
++      "bin": {
++        "marked": "bin/marked.js"
++      },
++      "engines": {
++        "node": ">= 18"
++      }
++    },
+     "node_modules/micromatch": {
+       "version": "4.0.8",
+       "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
+@@ -2951,11 +3928,21 @@
+         "node": ">=16 || 14 >=14.17"
+       }
+     },
++    "node_modules/mlly": {
++      "version": "1.7.3",
++      "resolved": "https://registry.npmjs.org/mlly/-/mlly-1.7.3.tgz",
++      "integrity": "sha512-xUsx5n/mN0uQf4V548PKQ+YShA4/IW0KI1dZhrNrPCLG+xizETbHTkOa1f8/xut9JRPp8kQuMnz0oqwkTiLo/A==",
++      "dependencies": {
++        "acorn": "^8.14.0",
++        "pathe": "^1.1.2",
++        "pkg-types": "^1.2.1",
++        "ufo": "^1.5.4"
++      }
++    },
+     "node_modules/ms": {
+       "version": "2.1.3",
+       "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+-      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+-      "dev": true
++      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="
+     },
+     "node_modules/mz": {
+       "version": "2.7.0",
+@@ -3090,6 +4077,11 @@
+       "resolved": "https://registry.npmjs.org/package-json-from-dist/-/package-json-from-dist-1.0.1.tgz",
+       "integrity": "sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw=="
+     },
++    "node_modules/package-manager-detector": {
++      "version": "0.2.5",
++      "resolved": "https://registry.npmjs.org/package-manager-detector/-/package-manager-detector-0.2.5.tgz",
++      "integrity": "sha512-3dS7y28uua+UDbRCLBqltMBrbI+A5U2mI9YuxHRxIWYmLj3DwntEBmERYzIAQ4DMeuCUOBSak7dBHHoXKpOTYQ=="
++    },
+     "node_modules/parent-module": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/parent-module/-/parent-module-1.0.1.tgz",
+@@ -3102,6 +4094,11 @@
+         "node": ">=6"
+       }
+     },
++    "node_modules/path-data-parser": {
++      "version": "0.1.0",
++      "resolved": "https://registry.npmjs.org/path-data-parser/-/path-data-parser-0.1.0.tgz",
++      "integrity": "sha512-NOnmBpt5Y2RWbuv0LMzsayp3lVylAHLPUTut412ZA3l+C4uw4ZVkQbjShYCQ8TCpUMdPapr4YjUqLYD6v68j+w=="
++    },
+     "node_modules/path-exists": {
+       "version": "4.0.0",
+       "resolved": "https://registry.npmjs.org/path-exists/-/path-exists-4.0.0.tgz",
+@@ -3162,6 +4159,11 @@
+         "node": ">=8"
+       }
+     },
++    "node_modules/pathe": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/pathe/-/pathe-1.1.2.tgz",
++      "integrity": "sha512-whLdWMYL2TwI08hn8/ZqAbrVemu0LNaNNJZX73O6qaIdCTfXutsLhMkjdENX0qhsQ9uIimo4/aQOmXkoon2nDQ=="
++    },
+     "node_modules/picocolors": {
+       "version": "1.1.1",
+       "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
+@@ -3194,6 +4196,30 @@
+         "node": ">= 6"
+       }
+     },
++    "node_modules/pkg-types": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/pkg-types/-/pkg-types-1.2.1.tgz",
++      "integrity": "sha512-sQoqa8alT3nHjGuTjuKgOnvjo4cljkufdtLMnO2LBP/wRwuDlo1tkaEdMxCRhyGRPacv/ztlZgDPm2b7FAmEvw==",
++      "dependencies": {
++        "confbox": "^0.1.8",
++        "mlly": "^1.7.2",
++        "pathe": "^1.1.2"
++      }
++    },
++    "node_modules/points-on-curve": {
++      "version": "0.2.0",
++      "resolved": "https://registry.npmjs.org/points-on-curve/-/points-on-curve-0.2.0.tgz",
++      "integrity": "sha512-0mYKnYYe9ZcqMCWhUjItv/oHjvgEsfKvnUTg8sAtnHr3GVy7rGkXCb6d5cSyqrWqL4k81b9CPg3urd+T7aop3A=="
++    },
++    "node_modules/points-on-path": {
++      "version": "0.2.1",
++      "resolved": "https://registry.npmjs.org/points-on-path/-/points-on-path-0.2.1.tgz",
++      "integrity": "sha512-25ClnWWuw7JbWZcgqY/gJ4FQWadKxGWk+3kR/7kD0tCaDtPPMj7oHu2ToLaVhfpnHrZzYby2w6tUA0eOIuUg8g==",
++      "dependencies": {
++        "path-data-parser": "0.1.0",
++        "points-on-curve": "0.2.0"
++      }
++    },
+     "node_modules/postcss": {
+       "version": "8.4.49",
+       "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.4.49.tgz",
+@@ -3509,6 +4535,11 @@
+         "url": "https://github.com/sponsors/isaacs"
+       }
+     },
++    "node_modules/robust-predicates": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/robust-predicates/-/robust-predicates-3.0.2.tgz",
++      "integrity": "sha512-IXgzBWvWQwE6PrDI05OvmXUIruQTcoMDzRsOd5CDvHCVLcLHMTSYvOK5Cm46kWqlV3yAbuSpBZdJ5oP5OUoStg=="
++    },
+     "node_modules/rollup": {
+       "version": "4.27.4",
+       "resolved": "https://registry.npmjs.org/rollup/-/rollup-4.27.4.tgz",
+@@ -3546,6 +4577,17 @@
+         "fsevents": "~2.3.2"
+       }
+     },
++    "node_modules/roughjs": {
++      "version": "4.6.6",
++      "resolved": "https://registry.npmjs.org/roughjs/-/roughjs-4.6.6.tgz",
++      "integrity": "sha512-ZUz/69+SYpFN/g/lUlo2FXcIjRkSu3nDarreVdGGndHEBJ6cXPdKguS8JGxwj5HA5xIbVKSmLgr5b3AWxtRfvQ==",
++      "dependencies": {
++        "hachure-fill": "^0.5.2",
++        "path-data-parser": "^0.1.0",
++        "points-on-curve": "^0.2.0",
++        "points-on-path": "^0.2.1"
++      }
++    },
+     "node_modules/run-parallel": {
+       "version": "1.2.0",
+       "resolved": "https://registry.npmjs.org/run-parallel/-/run-parallel-1.2.0.tgz",
+@@ -3568,6 +4610,16 @@
+         "queue-microtask": "^1.2.2"
+       }
+     },
++    "node_modules/rw": {
++      "version": "1.3.3",
++      "resolved": "https://registry.npmjs.org/rw/-/rw-1.3.3.tgz",
++      "integrity": "sha512-PdhdWy89SiZogBLaw42zdeqtRJ//zFd2PgQavcICDUgJT5oW10QCRKbJ6bg4r0/UY2M6BWd5tkxuGFRvCkgfHQ=="
++    },
++    "node_modules/safer-buffer": {
++      "version": "2.1.2",
++      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
++      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg=="
++    },
+     "node_modules/scheduler": {
+       "version": "0.23.2",
+       "resolved": "https://registry.npmjs.org/scheduler/-/scheduler-0.23.2.tgz",
+@@ -3730,6 +4782,11 @@
+         "url": "https://github.com/sponsors/sindresorhus"
+       }
+     },
++    "node_modules/stylis": {
++      "version": "4.3.4",
++      "resolved": "https://registry.npmjs.org/stylis/-/stylis-4.3.4.tgz",
++      "integrity": "sha512-osIBl6BGUmSfDkyH2mB7EFvCJntXDrLhKjHTRj/rK6xLH0yuPrHULDRQzKokSOD4VoorhtKpfcfW1GAntu8now=="
++    },
+     "node_modules/sucrase": {
+       "version": "3.35.0",
+       "resolved": "https://registry.npmjs.org/sucrase/-/sucrase-3.35.0.tgz",
+@@ -3885,6 +4942,11 @@
+         "node": ">=0.8"
+       }
+     },
++    "node_modules/tinyexec": {
++      "version": "0.3.1",
++      "resolved": "https://registry.npmjs.org/tinyexec/-/tinyexec-0.3.1.tgz",
++      "integrity": "sha512-WiCJLEECkO18gwqIp6+hJg0//p23HXp4S+gGtAKu3mI2F2/sXC4FvHvXvB0zJVVaTPhx1/tOwdbRsa1sOBIKqQ=="
++    },
+     "node_modules/to-regex-range": {
+       "version": "5.0.1",
+       "resolved": "https://registry.npmjs.org/to-regex-range/-/to-regex-range-5.0.1.tgz",
+@@ -3908,6 +4970,14 @@
+         "typescript": ">=4.2.0"
+       }
+     },
++    "node_modules/ts-dedent": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/ts-dedent/-/ts-dedent-2.2.0.tgz",
++      "integrity": "sha512-q5W7tVM71e2xjHZTlgfTDoPF/SmqKG5hddq9SzR49CH2hayqRKJtQ4mtRlSxKaJlR/+9rEM+mnBHf7I2/BQcpQ==",
++      "engines": {
++        "node": ">=6.10"
++      }
++    },
+     "node_modules/ts-interface-checker": {
+       "version": "0.1.13",
+       "resolved": "https://registry.npmjs.org/ts-interface-checker/-/ts-interface-checker-0.1.13.tgz",
+@@ -3950,6 +5020,11 @@
+         "node": ">=14.17"
+       }
+     },
++    "node_modules/ufo": {
++      "version": "1.5.4",
++      "resolved": "https://registry.npmjs.org/ufo/-/ufo-1.5.4.tgz",
++      "integrity": "sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ=="
++    },
+     "node_modules/undici-types": {
+       "version": "6.19.8",
+       "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.19.8.tgz",
+@@ -4000,6 +5075,18 @@
+       "resolved": "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz",
+       "integrity": "sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw=="
+     },
++    "node_modules/uuid": {
++      "version": "9.0.1",
++      "resolved": "https://registry.npmjs.org/uuid/-/uuid-9.0.1.tgz",
++      "integrity": "sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==",
++      "funding": [
++        "https://github.com/sponsors/broofa",
++        "https://github.com/sponsors/ctavan"
++      ],
++      "bin": {
++        "uuid": "dist/bin/uuid"
++      }
++    },
+     "node_modules/vite": {
+       "version": "5.4.11",
+       "resolved": "https://registry.npmjs.org/vite/-/vite-5.4.11.tgz",
+@@ -4059,6 +5146,49 @@
+         }
+       }
+     },
++    "node_modules/vscode-jsonrpc": {
++      "version": "8.2.0",
++      "resolved": "https://registry.npmjs.org/vscode-jsonrpc/-/vscode-jsonrpc-8.2.0.tgz",
++      "integrity": "sha512-C+r0eKJUIfiDIfwJhria30+TYWPtuHJXHtI7J0YlOmKAo7ogxP20T0zxB7HZQIFhIyvoBPwWskjxrvAtfjyZfA==",
++      "engines": {
++        "node": ">=14.0.0"
++      }
++    },
++    "node_modules/vscode-languageserver": {
++      "version": "9.0.1",
++      "resolved": "https://registry.npmjs.org/vscode-languageserver/-/vscode-languageserver-9.0.1.tgz",
++      "integrity": "sha512-woByF3PDpkHFUreUa7Hos7+pUWdeWMXRd26+ZX2A8cFx6v/JPTtd4/uN0/jB6XQHYaOlHbio03NTHCqrgG5n7g==",
++      "dependencies": {
++        "vscode-languageserver-protocol": "3.17.5"
++      },
++      "bin": {
++        "installServerIntoExtension": "bin/installServerIntoExtension"
++      }
++    },
++    "node_modules/vscode-languageserver-protocol": {
++      "version": "3.17.5",
++      "resolved": "https://registry.npmjs.org/vscode-languageserver-protocol/-/vscode-languageserver-protocol-3.17.5.tgz",
++      "integrity": "sha512-mb1bvRJN8SVznADSGWM9u/b07H7Ecg0I3OgXDuLdn307rl/J3A9YD6/eYOssqhecL27hK1IPZAsaqh00i/Jljg==",
++      "dependencies": {
++        "vscode-jsonrpc": "8.2.0",
++        "vscode-languageserver-types": "3.17.5"
++      }
++    },
++    "node_modules/vscode-languageserver-textdocument": {
++      "version": "1.0.12",
++      "resolved": "https://registry.npmjs.org/vscode-languageserver-textdocument/-/vscode-languageserver-textdocument-1.0.12.tgz",
++      "integrity": "sha512-cxWNPesCnQCcMPeenjKKsOCKQZ/L6Tv19DTRIGuLWe32lyzWhihGVJ/rcckZXJxfdKCFvRLS3fpBIsV/ZGX4zA=="
++    },
++    "node_modules/vscode-languageserver-types": {
++      "version": "3.17.5",
++      "resolved": "https://registry.npmjs.org/vscode-languageserver-types/-/vscode-languageserver-types-3.17.5.tgz",
++      "integrity": "sha512-Ld1VelNuX9pdF39h2Hgaeb5hEZM2Z3jUrrMgWQAu82jMtZp7p3vJT3BzToKtZI7NgQssZje5o0zryOrhQvzQAg=="
++    },
++    "node_modules/vscode-uri": {
++      "version": "3.0.8",
++      "resolved": "https://registry.npmjs.org/vscode-uri/-/vscode-uri-3.0.8.tgz",
++      "integrity": "sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw=="
++    },
+     "node_modules/which": {
+       "version": "2.0.2",
+       "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+diff --git a/web/package.json b/web/package.json
+index 791f962..f9c72e5 100644
+--- a/web/package.json
++++ b/web/package.json
+@@ -19,6 +19,7 @@
+     "js-yaml": "^4.1.0",
+     "lucide-react": "^0.461.0",
+     "marked": "^15.0.2",
++    "mermaid": "^11.4.0",
+     "react": "^18.2.0",
+     "react-dom": "^18.2.0",
+     "react-router-dom": "^6.28.0",
+diff --git a/web/src/components/MermaidViewer.tsx b/web/src/components/MermaidViewer.tsx
+new file mode 100644
+index 0000000..08b5d63
+--- /dev/null
++++ b/web/src/components/MermaidViewer.tsx
+@@ -0,0 +1,48 @@
++import React, { useEffect, useRef } from 'react';
++import mermaid from 'mermaid';
++
++mermaid.initialize({
++    startOnLoad: false,
++    theme: 'default',
++    securityLevel: 'loose',
++    flowchart: {
++        curve: 'basis',
++        padding: 20
++    }
++});
++
++interface MermaidViewerProps {
++    chart: string;
++    className?: string;
++}
++
++const MermaidViewer: React.FC<MermaidViewerProps> = ({ chart, className = '' }) => {
++    const containerRef = useRef<HTMLDivElement>(null);
++
++    useEffect(() => {
++        const renderChart = async () => {
++            if (containerRef.current) {
++                // Clear previous content
++                containerRef.current.innerHTML = '';
++                try {
++                    const { svg } = await mermaid.render('mermaid-svg', chart);
++                    containerRef.current.innerHTML = svg;
++                } catch (error) {
++                    console.error('Mermaid rendering error:', error);
++                    containerRef.current.innerHTML = '<div class="text-red-500">Error rendering workflow diagram</div>';
++                }
++            }
++        };
++
++        renderChart();
++    }, [chart]);
++
++    return (
++        <div
++            ref={containerRef}
++            className={`mermaid-viewer overflow-x-auto ${className}`}
++        />
++    );
++};
++
++export default MermaidViewer;
+\ No newline at end of file
+diff --git a/web/src/pages/Recipe.tsx b/web/src/pages/Recipe.tsx
+index 792afdc..21f9f4e 100644
+--- a/web/src/pages/Recipe.tsx
++++ b/web/src/pages/Recipe.tsx
+@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
+ import { useParams } from 'react-router-dom';
+ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+ import MarkdownViewer from '../components/MarkdownViewer';
++import MermaidViewer from '../components/MermaidViewer';
+ import { marked } from 'marked';
+ import hljs from 'highlight.js';
+ import 'highlight.js/styles/github.css';
+ 
+-// Rest of your Recipe.tsx code remains the same...
+-
+ interface RecipeData {
+     name: string;
+     description: string;
+@@ -15,6 +14,31 @@ interface RecipeData {
+     readme: string;
+     path: string;
+     tags?: string[];
++    workflow: Array<{
++        id: string;
++        name: string;
++        tool: string;
++        description: string;
++        output_handling?: string;
++    }>;
++}
++
++function generateMermaidDiagram(workflow: RecipeData['workflow']): string {
++    let mermaid = 'graph TD\n';
++
++    // Add nodes and connections
++    workflow.forEach((step, index) => {
++        // Add node
++        mermaid += `    ${step.id}["${step.name}<br/>(${step.tool})"]\n`;
++
++        // Add connection to next step
++        if (index < workflow.length - 1) {
++            const nextStep = workflow[index + 1];
++            mermaid += `    ${step.id} -->|${step.output_handling || 'Output'}| ${nextStep.id}\n`;
++        }
++    });
++
++    return mermaid;
+ }
+ 
+ export function Recipe() {
+@@ -23,22 +47,6 @@ export function Recipe() {
+     const [loading, setLoading] = useState(true);
+     const [error, setError] = useState<string | null>(null);
+ 
+-    // Configure marked options
+-    marked.setOptions({
+-        gfm: true,
+-        breaks: true,
+-        highlight: (code, language) => {
+-            if (language && hljs.getLanguage(language)) {
+-                try {
+-                    return hljs.highlight(code, { language }).value;
+-                } catch (err) {
+-                    console.error('Highlight.js error:', err);
+-                }
+-            }
+-            return code;
+-        }
+-    });
+-
+     useEffect(() => {
+         const fetchRecipe = async () => {
+             try {
+@@ -98,6 +106,8 @@ export function Recipe() {
+         );
+     }
+ 
++    const mermaidDiagram = generateMermaidDiagram(data.workflow);
++
+     return (
+         <div className="container mx-auto px-4 py-8">
+             <Card>
+@@ -122,12 +132,19 @@ export function Recipe() {
+                     )}
+                 </CardHeader>
+                 <CardContent>
+-                    <div className="prose prose-slate max-w-none">
++                    <div className="mb-8">
++                        <h2 className="text-xl font-semibold mb-4">Workflow</h2>
++                        <MermaidViewer
++                            chart={mermaidDiagram}
++                            className="bg-white p-4 rounded-lg shadow-sm"
++                        />
++                    </div>
++                    <div className="prose max-w-none">
+                         {data.readme && (
+                             <div
+                                 className="markdown-content"
+                                 dangerouslySetInnerHTML={{
+-                                    __html: marked(data.readme)
++                                    __html: marked.parse(data.readme)
+                                 }}
+                             />
+                         )}
