@@ -1,0 +1,40 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'recipes/**/recipe.yaml'
+      - 'recipes/**/description.md'
+  pull_request:
+    paths:
+      - 'recipes/**/recipe.yaml'
+      - 'recipes/**/description.md'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+        
+      - name: Generate README files
+        run: |
+          python .github/scripts/generate_readme.py
+
+      # Only commit changes if this is a push to main
+      - name: Commit README changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: Update generated documentation [skip ci]"
+          file_pattern: 'recipes/**/README.md'
