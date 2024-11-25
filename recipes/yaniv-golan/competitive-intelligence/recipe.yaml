@@ -12,7 +12,7 @@ parameters:
   - name: company_name
     description: "Your company name for competitor analysis context"
     required: true
-    example: "SimpliSafe"
+    example: "SimpliSafe2"
   
   - name: target_industry
     description: "The industry to analyze competitors in"
