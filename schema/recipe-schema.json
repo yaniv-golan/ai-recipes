@@ -1,0 +1,333 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Recipe Schema",
+    "type": "object",
+    "required": [
+        "name",
+        "description",
+        "tags",
+        "parameters",
+        "tools",
+        "workflow",
+        "tips",
+        "examples"
+    ],
+    "properties": {
+        "name": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[a-zA-Z0-9-]+$"
+        },
+        "description": {
+            "type": "string",
+            "maxLength": 500
+        },
+        "tags": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]+$"
+            }
+        },
+        "parameters": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/parameter"
+            }
+        },
+        "tools": {
+            "type": "object",
+            "required": [
+                "chatgpt",
+                "claude",
+                "perplexity",
+                "google_docs"
+            ],
+            "properties": {
+                "chatgpt": {
+                    "type": "object",
+                    "required": [
+                        "used_for",
+                        "settings"
+                    ],
+                    "properties": {
+                        "used_for": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "settings": {
+                            "type": "object",
+                            "required": [
+                                "model",
+                                "enable_web_search"
+                            ],
+                            "properties": {
+                                "model": {
+                                    "type": "string",
+                                    "enum": [
+                                        "GPT-4o",
+                                        "GPT-4o with canvas",
+                                        "o1-preview",
+                                        "o1-mini"
+                                    ]
+                                },
+                                "enable_web_search": {
+                                    "type": "boolean",
+                                    "default": false
+                                },
+                                "custom_gpt": {
+                                    "oneOf": [
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "name",
+                                                "url"
+                                            ],
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "url": {
+                                                    "type": "string",
+                                                    "format": "uri"
+                                                }
+                                            },
+                                            "additionalProperties": false
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "claude": {
+                    "type": "object",
+                    "required": [
+                        "used_for",
+                        "settings"
+                    ],
+                    "properties": {
+                        "used_for": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "settings": {
+                            "type": "object",
+                            "required": [
+                                "model"
+                            ],
+                            "properties": {
+                                "model": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Claude 3.5 Sonnet",
+                                        "Claude 3 Opus"
+                                    ]
+                                },
+                                "enable_artifacts": {
+                                    "type": "boolean",
+                                    "default": false
+                                },
+                                "enable_analysis_tool": {
+                                    "type": "boolean",
+                                    "default": false
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "perplexity": {
+                    "type": "object",
+                    "required": [
+                        "used_for",
+                        "settings"
+                    ],
+                    "properties": {
+                        "used_for": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "settings": {
+                            "type": "object",
+                            "required": [
+                                "focus",
+                                "enable_pro"
+                            ],
+                            "properties": {
+                                "focus": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Web",
+                                        "Academic",
+                                        "Math",
+                                        "Writing",
+                                        "Video",
+                                        "Social"
+                                    ]
+                                },
+                                "enable_pro": {
+                                    "type": "boolean",
+                                    "default": false
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "google_docs": {
+                    "type": "object",
+                    "required": [
+                        "used_for",
+                        "settings"
+                    ],
+                    "properties": {
+                        "used_for": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "settings": {
+                            "type": "object",
+                            "required": [
+                                "enable_markdown"
+                            ],
+                            "properties": {
+                                "enable_markdown": {
+                                    "type": "boolean",
+                                    "default": true
+                                }
+                            },
+                            "additionalProperties": false
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        },
+        "workflow": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/workflow_item"
+            }
+        },
+        "tips": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "examples": {
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/example"
+            }
+        }
+    },
+    "definitions": {
+        "parameter": {
+            "type": "object",
+            "required": [
+                "name",
+                "description",
+                "required"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "required": {
+                    "type": "boolean"
+                },
+                "default": {
+                    "type": "string"
+                },
+                "example": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "workflow_item": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "tool",
+                "description",
+                "tool_usage"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tool": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "tool_usage": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "tool_settings": {
+                    "type": "object"
+                },
+                "input_source": {
+                    "type": "string"
+                },
+                "output_handling": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "example": {
+            "type": "object",
+            "required": [
+                "parameters",
+                "sample_queries"
+            ],
+            "properties": {
+                "parameters": {
+                    "type": "object"
+                },
+                "sample_queries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": false
+}

@@ -5,12 +5,14 @@ on:
     paths:
       - 'recipes/**/*.yaml'
       - 'recipes/**/*.yml'
+      - 'schema/**/*.json'  # Changed to .json since schema is now JSON
       - 'schema/**/*.yaml'
       - 'schema/**/*.yml'
   pull_request:
     paths:
       - 'recipes/**/*.yaml'
       - 'recipes/**/*.yml'
+      - 'schema/**/*.json'  # Changed to .json since schema is now JSON
       - 'schema/**/*.yaml'
       - 'schema/**/*.yml'
 
@@ -28,19 +30,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyyaml yamale jsonschema
-
-      - name: Check directory structure
-        run: |
-          python .github/scripts/check_structure.py
-          
+          pip install pyyaml jsonschema
+        
       - name: Validate YAML syntax
         run: |
           python .github/scripts/validate_yaml.py
-          
-      - name: Validate against schema
+        
+      - name: Validate against JSON Schema
         run: |
-          python .github/scripts/validate_schema.py
+          python .github/scripts/validate_schema.py schema/recipe-schema.json recipes/
           
       - name: Check for required files
         run: |
