@@ -14,7 +14,7 @@ While individual AI tools like ChatGPT, Claude, and Perplexity are powerful on t
 
 If you're comfortable using GitHub and reading the recipes in YAML or README files, great. Keep going. 
 
-A more accessible version of this repostiory is available [https://yaniv-golan.github.io/ai-recipes/](https://yaniv-golan.github.io/ai-recipes/).
+For mere mortals though, a more accessible version of this repostiory is available [https://yaniv-golan.github.io/ai-recipes/](https://yaniv-golan.github.io/ai-recipes/).
 
 ## Repository Structure
 
