@@ -17,8 +17,8 @@ parameters:
   - name: time_horizon
     description: "Future time period for projections"
     required: false
-    default: "2 years"
-    example: "2024-2026"
+    default: "3 years"
+    example: "2024-2027"
 
 tools:
   claude:
