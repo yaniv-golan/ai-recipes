@@ -28,28 +28,6 @@ properties:
       pattern: "^[a-zA-Z0-9-]+$"  # Ensure URL-friendly tags
     description: "Free-form tags for categorization and discovery"
   
-  metadata:
-    type: object
-    properties:
-      difficulty:
-        type: string
-        enum:
-          - beginner
-          - intermediate
-          - advanced
-      time_estimate:
-        type: string
-      license:
-        type: string
-        default: "MIT"
-      visibility:
-        type: string
-        enum:
-          - public
-          - private
-          - organization
-        default: "public"
-
   parameters:
     type: array
     items:
@@ -57,7 +35,7 @@ properties:
       required:
         - name
         - description
-        - required
+        - requiredœœ
       properties:
         name:
           type: string
