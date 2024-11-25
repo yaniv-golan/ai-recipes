@@ -6,7 +6,6 @@ tags:
   - market-analysis
   - competitive-intelligence
   - research-workflow
-  - multi-tool
   - data-synthesis
 
 parameters:
@@ -105,7 +104,7 @@ workflow:
     tool_usage: |
       For each research query in the Google Doc:
       1. Copy query text
-      2. Execute in Perplexity with Academic focus enabled
+      2. Execute in Perplexity
       3. Wait for complete response
       4. Click 'Copy' button in Perplexity response
       5. Return to Google Doc
@@ -182,7 +181,6 @@ workflow:
     notes: "Ensure all data points are properly referenced in the final report"
 
 tips:
-  - "Use Perplexity's Academic focus for higher quality sources"
   - "Review queries before execution to ensure comprehensive coverage"
   - "Double-check formatting in Google Doc after each paste"
   - "Let Perplexity fully complete its response before copying"

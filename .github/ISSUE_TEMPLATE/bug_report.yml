@@ -1,0 +1,78 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+        
+  - type: dropdown
+    id: recipe
+    attributes:
+      label: Recipe
+      description: Which recipe is affected?
+      options:
+        - Market Analysis
+        - Competitive Intelligence
+        - Other (specify in description)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Tool
+      description: Which tool is affected?
+      options:
+        - Claude
+        - Perplexity
+        - ChatGPT
+        - Google Docs
+        - Multiple Tools
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: "Tell us what you see!"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: tool-versions
+    attributes:
+      label: Tool Versions/Settings
+      description: What versions/settings of the tools are you using?
+      placeholder: |
+        - Claude: 3.5 Sonnet
+        - Perplexity: Pro enabled
+        - ChatGPT: GPT-4
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here
+    validations:
+      required: false

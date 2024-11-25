@@ -5,7 +5,6 @@ tags:
   - competitive-intelligence
   - competitor-analysis
   - market-research
-  - multi-tool
   - data-synthesis
   - strategic-analysis
 
@@ -110,7 +109,7 @@ workflow:
     tool_usage: |
       For each research query in the Google Doc:
       1. Copy query text
-      2. Execute in Perplexity with Academic focus enabled
+      2. Execute in Perplexity 
       3. Wait for complete response
       4. Click 'Copy' button in Perplexity response
       5. Return to Google Doc

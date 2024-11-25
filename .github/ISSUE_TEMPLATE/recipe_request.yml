@@ -1,0 +1,65 @@
+name: Recipe Request
+description: Request a new AI workflow recipe
+title: "[Recipe Request]: "
+labels: ["recipe-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new recipe! Please provide as much detail as possible.
+        
+  - type: input
+    id: workflow-name
+    attributes:
+      label: Workflow Name
+      description: What would you call this workflow?
+      placeholder: "e.g., Customer Feedback Analysis"
+    validations:
+      required: true
+
+  - type: textarea
+    id: workflow-description
+    attributes:
+      label: Workflow Description
+      description: Describe what this workflow should accomplish
+      placeholder: "This workflow should help analyze customer feedback from multiple sources..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: tools
+    attributes:
+      label: Suggested Tools
+      description: What AI tools do you think would be useful for this workflow?
+      placeholder: |
+        - Claude for...
+        - Perplexity for...
+        - ChatGPT for...
+    validations:
+      required: true
+
+  - type: textarea
+    id: example-use-case
+    attributes:
+      label: Example Use Case
+      description: Provide an example of how this workflow would be used
+      placeholder: "When analyzing customer feedback for a product launch..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-output
+    attributes:
+      label: Expected Output
+      description: What kind of output would you expect from this workflow?
+      placeholder: "A report containing..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other information that might be helpful
+    validations:
+      required: false

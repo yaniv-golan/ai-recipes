@@ -64,7 +64,6 @@ Creates structured document for competitive research:
 
 Systematically gathers competitor data:
 
-- Uses Academic focus for reliable sources
 - Documents competitive insights
 - Maintains structured data collection
 
