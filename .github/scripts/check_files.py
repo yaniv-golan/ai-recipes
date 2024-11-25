@@ -2,13 +2,16 @@
 """
 Check for required files in recipe directories:
 - recipe.yaml
-- README.md
+- workflow.mmd
+- description.md (optional)
+- README.md (will be generated)
 Also validates URL-friendly names
 """
 
 import os
 import sys
 import re
+import yaml
 from pathlib import Path
 
 def is_url_friendly(name):
@@ -22,7 +25,7 @@ def check_recipe_files(recipe_dir):
         errors.append(f"Recipe directory name not URL-friendly: {recipe_dir.name}")
     
     # Check required files
-    required_files = ['recipe.yaml', 'README.md']
+    required_files = ['recipe.yaml', 'workflow.mmd']
     for required_file in required_files:
         file_path = recipe_dir / required_file
         if not file_path.exists():
