@@ -1,0 +1,28 @@
+[
+  {
+    "id": "yaniv-golan/competitive-intelligence",
+    "title": "competitive-intelligence",
+    "description": "A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports.",
+    "tags": [
+      "competitive-intelligence",
+      "competitor-analysis",
+      "market-research",
+      "data-synthesis",
+      "strategic-analysis"
+    ],
+    "author": "yaniv-golan"
+  },
+  {
+    "id": "yaniv-golan/market-analysis",
+    "title": "market-analysis",
+    "description": "A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports.",
+    "tags": [
+      "market-research",
+      "market-analysis",
+      "competitive-intelligence",
+      "research-workflow",
+      "data-synthesis"
+    ],
+    "author": "yaniv-golan"
+  }
+]
