@@ -1,0 +1,203 @@
+name: market-analysis
+description: "A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports."
+
+tags:
+  - market-research
+  - market-analysis
+  - competitive-intelligence
+  - research-workflow
+  - multi-tool
+  - data-synthesis
+
+metadata:
+  difficulty: intermediate
+  time_estimate: "15-20 minutes"
+  visibility: public
+  license: MIT
+
+parameters:
+  - name: target_market
+    description: "The specific market to analyze"
+    required: true
+    example: "US smart home security market"
+  
+  - name: time_horizon
+    description: "Future time period for projections"
+    required: false
+    default: "3 years"
+    example: "2024-2027"
+
+tools:
+  claude:
+    used_for:
+      - "Query generation"
+      - "Research framework development"
+    settings:
+      model: "Claude 3.5 Sonnet"
+
+  perplexity:
+    used_for:
+      - "Market research execution"
+      - "Data gathering"
+    settings:
+      focus: "Academic"
+      enable_pro: true
+  
+  chatgpt:
+    used_for:
+      - "Data synthesis"
+      - "Report generation"
+    settings:
+      model: "GPT-4o"
+      enable_web_search: false
+  
+  google_docs:
+    used_for:
+      - "Research documentation"
+      - "Report organization"
+    settings:
+      enable_markdown: true
+
+workflow:
+  - id: "query_generation"
+    name: "Research Query Generation"
+    tool: "claude"
+    description: "Generate comprehensive research queries using Claude's analytical capabilities"
+    tool_usage: |
+      1. Create a new conversation with Claude
+      2. Use the provided prompt template
+      3. Review and refine generated queries
+    prompt: |
+      **Role:** You are a market research specialist tasked with generating 5 specific, standalone search queries to analyze the following target market:
+
+      <target_market>
+      {{target_market}}
+      </target_market>
+
+      **Task Requirements:**
+      - **Self-Contained:** Each query must include all necessary context to stand alone.
+      - **Different Aspects:** Focus on a different aspect of market analysis for each query (e.g., market size, trends, segments, competitors, consumer behavior).
+      - **Current Year Data:** Target data from current year.
+
+      **Instructions:**
+      - **Generate 5 Search Queries:** No need to include the planning process; focus on producing the final queries.
+      - **Formatting:** Present each query on a separate line, numbered from 1 to 5.
+      - **Style:** Keep queries concise and consistent in format.
+
+      Please generate the 5 search queries accordingly.
+    output_handling: "Copy queries for next step"
+    notes: "Ensure queries cover market size, competitors, trends, consumer behavior, and technology/innovation aspects"
+
+  - id: "setup_document"
+    name: "Research Document Setup"
+    tool: "google_docs"
+    description: "Create and format Google Doc for research documentation"
+    tool_usage: |
+      1. Create new Google Doc
+      2. Set title format: "[Current Date] - [Target Market] - Market Analysis Research"
+         Example: "2024-11-25 - Smart Home Security - Market Analysis Research"
+      3. For each query from previous step:
+         a. Paste query text
+         b. Format as Heading 1
+         c. Press Enter twice to leave space for response
+         d. Ensure normal text formatting is set for response area
+    notes: "Double-check formatting settings after each query addition"
+
+  - id: "research_execution"
+    name: "Research Data Collection"
+    tool: "perplexity"
+    description: "Execute research queries and document findings"
+    input_source: "queries from query_generation step"
+    tool_usage: |
+      For each research query in the Google Doc:
+      1. Copy query text
+      2. Execute in Perplexity with Academic focus enabled
+      3. Wait for complete response
+      4. Click 'Copy' button in Perplexity response
+      5. Return to Google Doc
+      6. Paste response under corresponding query heading
+      7. Add blank line before next query section
+    output_handling: "Save document as PDF when complete"
+
+  - id: "synthesis_analysis"
+    name: "Report Generation"
+    tool: "chatgpt"
+    description: "Synthesize research findings into comprehensive market analysis"
+    input_source: "PDF from research_execution step"
+    tool_usage: |
+      1. Upload research PDF to ChatGPT
+      2. Use the provided analysis prompt
+      3. Review output for completeness
+    prompt: |
+      You are a seasoned market analyst tasked with creating a comprehensive analysis based on provided market research data. Your analysis should be thorough, insightful, and reference specific data points from the research.
+
+      The market research data that you need to analyze is attached.
+      Please create a comprehensive market analysis report based on this data. Your report should include the following sections:
+
+      # Market Analysis Report Background
+
+      ## Key Data Points
+      ### Key Data Points for Executive Summary
+      [Extract and list key data points]
+
+      ### Key Data Points for Market Overview
+      [Extract and list key data points]
+
+      ### Key Data Points for Strategic Implications
+      [Extract and list key data points]
+
+      ## Sections Analysis
+      ### Section Analysis for Executive Summary
+      [Detailed analysis]
+
+      ### Section Analysis for Market Overview
+      [Detailed analysis]
+
+      ### Section Analysis for Strategic Implications
+      [Detailed analysis]
+
+      # Market Analysis Report
+
+      ## 1. Executive Summary
+      - Market Size and Growth
+      - Key Drivers
+      - Major Trends
+
+      ## 2. Market Overview
+      - Detailed Segmentation
+      - Growth Drivers
+      - Constraints
+
+      ## 3. Strategic Implications
+      - Market Opportunities
+      - Entry Barriers
+      - Success Factors
+
+      Instructions:
+      1. Begin by carefully reading the provided market research data.
+      2. Extract and categorize key data points.
+      3. Review and identify missing important data points.
+      4. For each section analysis:
+         - Break down thought process and findings
+         - Connect data points to conclusions
+         - Identify gaps and inconsistencies
+      5. Review and improve analyses.
+      6. Create final report with specific data point references.
+
+      Please proceed with your analysis and report.
+    notes: "Ensure all data points are properly referenced in the final report"
+
+tips:
+  - "Use Perplexity's Academic focus for higher quality sources"
+  - "Review queries before execution to ensure comprehensive coverage"
+  - "Double-check formatting in Google Doc after each paste"
+  - "Let Perplexity fully complete its response before copying"
+  - "Review the full research document before running the synthesis"
+
+examples:
+  - parameters:
+      target_market: "US smart home security market"
+      time_horizon: "2024-2027"
+    sample_queries:
+      - "What is the total market size of the US smart home security systems industry in 2024, including DIY and professional segments, and what are the projected growth rates through 2027?"
+      - "Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings."
