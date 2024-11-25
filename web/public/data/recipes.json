@@ -1,0 +1,261 @@
+[
+  {
+    "name": "competitive-intelligence",
+    "description": "A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports.",
+    "tags": [
+      "competitive-intelligence",
+      "competitor-analysis",
+      "market-research",
+      "data-synthesis",
+      "strategic-analysis"
+    ],
+    "parameters": [
+      {
+        "name": "company_name",
+        "description": "Your company name for competitor analysis context",
+        "required": true,
+        "example": "SimpliSafe"
+      },
+      {
+        "name": "target_industry",
+        "description": "The industry to analyze competitors in",
+        "required": true,
+        "example": "US smart home security market"
+      },
+      {
+        "name": "competitors",
+        "description": "List of key competitors to focus on",
+        "required": false,
+        "example": "ADT, Ring, Vivint"
+      }
+    ],
+    "tools": {
+      "claude": {
+        "used_for": [
+          "Query generation",
+          "Analysis framework development"
+        ],
+        "settings": {
+          "model": "Claude 3.5 Sonnet"
+        }
+      },
+      "perplexity": {
+        "used_for": [
+          "Competitor research execution",
+          "Data gathering"
+        ],
+        "settings": {
+          "focus": "Web",
+          "enable_pro": true
+        }
+      },
+      "chatgpt": {
+        "used_for": [
+          "Data synthesis",
+          "Report generation"
+        ],
+        "settings": {
+          "model": "GPT-4o",
+          "enable_web_search": false
+        }
+      },
+      "google_docs": {
+        "used_for": [
+          "Research documentation",
+          "Report organization"
+        ],
+        "settings": {
+          "enable_markdown": true
+        }
+      }
+    },
+    "workflow": [
+      {
+        "id": "query_generation",
+        "name": "Competitive Query Generation",
+        "tool": "claude",
+        "description": "Generate focused competitor analysis queries",
+        "tool_usage": "1. Create a new conversation with Claude\n2. Use the provided prompt template\n3. Review and refine generated queries\n",
+        "prompt": "**Role:** You are a market research specialist working on behalf of **{{company_name}}**. Your task is to generate **5 specific, standalone search queries** to analyze competitors in the following target industry:\n\n<target_industry>\n{{target_industry}}\n</target_industry>\n\n**Task Requirements:**\n- **Different Competitive Aspects:** Each query should focus on a different aspect of competitor analysis relevant to **{{company_name}}**, such as market share, product offerings, marketing strategies, financial performance, customer feedback, etc.\n- **Current Year Data:** Target data from the **current year**.\n- **Include Specific Competitor Names:** Where relevant, mention specific competitors, especially those directly competing with **{{company_name}}**.\n- **Self-Contained:** Each query must include all necessary context to stand alone.\n\n**Instructions:**\n1. **Generate 5 Search Queries:** Focus on producing concise and effective search queries that meet the above requirements and are tailored to **{{company_name}}**'s interests.\n2. **Formatting:** Present each query on a separate line, numbered from 1 to 5.\n3. **Style:** Keep queries clear, specific, and consistent in format.\n\nPlease generate the 5 search queries accordingly.\n",
+        "output_handling": "Copy queries for next step",
+        "notes": "Ensure queries cover market share, product comparison, strategy, financial performance, and customer feedback"
+      },
+      {
+        "id": "setup_document",
+        "name": "Research Document Setup",
+        "tool": "google_docs",
+        "description": "Create and format Google Doc for competitor research",
+        "tool_usage": "1. Create new Google Doc\n2. Set title format: \"[Date] - [Industry] - Competitive Analysis\"\n   Example: \"2024-11-25 - Smart Home Security - Competitive Analysis\"\n3. For each query from previous step:\n   a. Paste query text\n   b. Format as Heading 1\n   c. Press Enter twice to leave space for response\n   d. Ensure normal text formatting is set for response area\n",
+        "notes": "Double-check formatting settings after each query addition"
+      },
+      {
+        "id": "research_execution",
+        "name": "Competitive Research Collection",
+        "tool": "perplexity",
+        "description": "Execute competitor research queries and document findings",
+        "input_source": "queries from query_generation step",
+        "tool_usage": "For each research query in the Google Doc:\n1. Copy query text\n2. Execute in Perplexity \n3. Wait for complete response\n4. Click 'Copy' button in Perplexity response\n5. Return to Google Doc\n6. Paste response under corresponding query heading\n7. Add blank line before next query section\n",
+        "output_handling": "Save document as PDF when complete"
+      },
+      {
+        "id": "competitive_assessment",
+        "name": "Competitive Analysis Generation",
+        "tool": "chatgpt",
+        "description": "Synthesize research findings into comprehensive competitive assessment",
+        "input_source": "PDF from research_execution step",
+        "tool_usage": "1. Upload research PDF to ChatGPT\n2. Use the provided analysis prompt\n3. Review output for completeness\n",
+        "prompt": "**Role:** You are a seasoned market analyst tasked with creating a comprehensive assessment based on the provided competitive research data. Your analysis should be thorough, insightful, and reference specific data points from the research.\n\nThe competitive research data that you need to analyze is attached.\n\n**Task:** Please create a comprehensive competitive assessment report based on this data. Your report should include the following sections:\n\n# Competitive Assessment Report Background\n\n## Key Data Points\n### Key Data Points for Competitive Landscape\n[Key Data Points for Competitive Landscape]\n\n### Key Data Points for Strategic Analysis\n[Key Data Points for Strategic Analysis]\n\n### Key Data Points for Competitive Dynamics\n[Key Data Points for Competitive Dynamics]\n\n## Sections Analysis\n### Section Analysis for Competitive Landscape\n[Section Analysis for Competitive Landscape]\n\n### Section Analysis for Strategic Analysis\n[Section Analysis for Strategic Analysis]\n\n### Section Analysis for Competitive Dynamics\n[Section Analysis for Competitive Dynamics]\n\n# Competitive Assessment Report\n\n## 1. Competitive Landscape\n- Market Share Analysis\n- Positioning Comparison\n- Key Player Profiles\n\n## 2. Strategic Analysis\n- Product/Service Comparison\n- Pricing Strategies\n- Go-to-Market Approaches\n\n## 3. Competitive Dynamics\n- Key Differentiators\n- Strengths/Weaknesses\n- Strategic Moves\n\nInstructions:\n1. Begin by thoroughly reading the provided competitive research data.\n2. Extract and categorize key data points.\n3. Review and identify missing data points.\n4. For each section analysis:\n   - Break down thought process and findings\n   - Connect data points to conclusions\n   - Identify gaps and inconsistencies\n5. Review and improve analyses.\n6. Create final report with specific data point references.\n\nPlease proceed with your analysis and report.\n",
+        "notes": "Ensure all competitor comparisons are objective and data-driven"
+      }
+    ],
+    "tips": [
+      "Include specific competitor names in queries when possible",
+      "Focus on recent data and developments",
+      "Cross-reference competitive claims across multiple sources",
+      "Look for objective metrics and comparisons",
+      "Pay attention to pricing and feature comparisons"
+    ],
+    "examples": [
+      {
+        "parameters": {
+          "company_name": "SimpliSafe",
+          "target_industry": "US smart home security market",
+          "competitors": "ADT, Ring, Vivint"
+        },
+        "sample_queries": [
+          "What are the current market shares and revenue figures for ADT, SimpliSafe, and Ring in the US smart home security market as of 2024?",
+          "Compare product offerings, pricing models, and subscription plans for leading US smart home security providers in 2024."
+        ]
+      }
+    ],
+    "author": "yaniv-golan",
+    "path": "yaniv-golan/competitive-intelligence",
+    "readme": "# Competitive Intelligence Recipe\n\n> \"I use this process every time I need to understand competitive movements in our market.\" - Michael\n\nA systematic approach to competitive intelligence that combines multiple AI tools to efficiently gather and analyze competitor information. This recipe uses Claude for query generation, Perplexity for research, and ChatGPT for synthesis to create comprehensive competitive analysis reports.\n\n## Quick Start\n\n1. Ensure you have access to:\n   - Claude (3.5 Sonnet or higher)\n   - Perplexity (Pro recommended)\n   - ChatGPT (GPT-4)\n   - Google Docs\n\n2. Define your parameters:\n\n   ```yaml\n   company_name: \"SimpliSafe\"              # Your company\n   target_industry: \"Smart home security\"   # Your industry\n   competitors: \"ADT, Ring, Vivint\"        # Key competitors\n   ```\n\n3. Follow the workflow:\n   1. Generate competitor research queries with Claude\n   2. Set up Google Doc with proper formatting\n   3. Execute research in Perplexity\n   4. Synthesize competitive assessment with ChatGPT\n\n## Time & Difficulty\n\n- **Time to Execute**: 15-20 minutes\n- **Difficulty Level**: Intermediate\n- **Tools Required**: 4 (Claude, Perplexity, ChatGPT, Google Docs)\n\n## Parameters\n\n| Parameter | Required | Description | Example |\n|-----------|----------|-------------|----------|\n| company_name | Yes | Your company's name | \"SimpliSafe\" |\n| target_industry | Yes | Industry to analyze | \"US smart home security market\" |\n| competitors | No | Key competitors to focus on | \"ADT, Ring, Vivint\" |\n\n## Workflow Steps\n\n### 1. Query Generation (Claude)\n\nGenerates 5 focused competitor analysis queries covering:\n\n- Market share and revenue comparison\n- Product and pricing analysis\n- Marketing strategies\n- Financial performance\n- Customer feedback and satisfaction\n\n### 2. Document Setup (Google Docs)\n\nCreates structured document for competitive research:\n\n- Title format: \"[Date] - [Industry] - Competitive Analysis\"\n- Example: \"2024-11-25 - Smart Home Security - Competitive Analysis\"\n- Organized sections for each competitor aspect\n\n### 3. Research Execution (Perplexity)\n\nSystematically gathers competitor data:\n\n- Documents competitive insights\n- Maintains structured data collection\n\n### 4. Competitive Assessment (ChatGPT)\n\nGenerates comprehensive analysis covering:\n\n- Competitive Landscape\n- Strategic Analysis\n- Competitive Dynamics\n\n## Output Structure\n\nThe final assessment includes:\n\n```markdown\n# Competitive Assessment Report\n\n## 1. Competitive Landscape\n- Market Share Analysis\n- Positioning Comparison\n- Key Player Profiles\n\n## 2. Strategic Analysis\n- Product/Service Comparison\n- Pricing Strategies\n- Go-to-Market Approaches\n\n## 3. Competitive Dynamics\n- Key Differentiators\n- Strengths/Weaknesses\n- Strategic Moves\n```\n\n## Best Practices\n\n1. Query Generation\n   - Include specific competitor names\n   - Focus on current data\n   - Cover multiple competitive aspects\n   - Be specific about metrics\n\n2. Research Collection\n   - Verify data from multiple sources\n   - Note dates of information\n   - Document contradictions\n   - Track methodology and sources\n\n3. Analysis\n   - Stay objective\n   - Use specific data points\n   - Note information gaps\n   - Consider market context\n\n4. Report Creation\n   - Use consistent competitor naming\n   - Include source citations\n   - Highlight key insights\n   - Note limitations\n\n## Tool Requirements\n\n### Claude\n\n- Model: Claude 3.5 Sonnet\n- Purpose: Competitor query generation\n- Key setting: None required\n\n### Perplexity\n\n- Pro account: Recommended\n- Purpose: Competitor research\n\n### ChatGPT\n\n- Model: GPT-4\n- Purpose: Competitive assessment\n- Web search: Not required\n\n### Google Docs\n\n- Purpose: Research documentation\n- Settings: Markdown support enabled\n\n## Troubleshooting\n\nCommon issues and solutions:\n\n1. **Outdated Competitor Data**\n   - Solution: Add date ranges to queries\n   - Alternative: Cross-reference multiple sources\n\n2. **Inconsistent Metrics**\n   - Solution: Standardize metrics before comparison\n   - Prevention: Define key metrics in queries\n\n3. **Missing Private Company Data**\n   - Solution: Use industry estimates\n   - Alternative: Focus on observable metrics\n\n## Recipe Variations\n\n1. **Quick Assessment**\n   - Focus on top 2-3 competitors\n   - Use key metrics only\n   - Streamline analysis sections\n\n2. **Deep Dive**\n   - Add product feature matrix\n   - Include customer sentiment analysis\n   - Track historical changes\n\n3. **Strategic Focus**\n   - Emphasize go-to-market strategies\n   - Focus on differentiation\n   - Analyze future positioning\n\n## Competitive Intelligence Ethics\n\n1. Use only publicly available information\n2. Verify sources and data points\n3. Maintain objectivity in analysis\n4. Respect confidential information\n5. Follow industry research guidelines\n\n## Support\n\nFor issues or suggestions:\n\n1. Use GitHub Issues for bugs/feature requests\n2. Use GitHub Discussions for usage questions\n3. Check existing discussions before posting\n\n## License\n\nMIT License - Feel free to modify and reuse\n"
+  },
+  {
+    "name": "market-analysis",
+    "description": "A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports.",
+    "tags": [
+      "market-research",
+      "market-analysis",
+      "competitive-intelligence",
+      "research-workflow",
+      "data-synthesis"
+    ],
+    "parameters": [
+      {
+        "name": "target_market",
+        "description": "The specific market to analyze",
+        "required": true,
+        "example": "US smart home security market"
+      },
+      {
+        "name": "time_horizon",
+        "description": "Future time period for projections",
+        "required": false,
+        "default": "2 years",
+        "example": "2024-2026"
+      }
+    ],
+    "tools": {
+      "claude": {
+        "used_for": [
+          "Query generation",
+          "Research framework development"
+        ],
+        "settings": {
+          "model": "Claude 3.5 Sonnet"
+        }
+      },
+      "perplexity": {
+        "used_for": [
+          "Market research execution",
+          "Data gathering"
+        ],
+        "settings": {
+          "focus": "Web",
+          "enable_pro": true
+        }
+      },
+      "chatgpt": {
+        "used_for": [
+          "Data synthesis",
+          "Report generation"
+        ],
+        "settings": {
+          "model": "GPT-4o",
+          "enable_web_search": false
+        }
+      },
+      "google_docs": {
+        "used_for": [
+          "Research documentation",
+          "Report organization"
+        ],
+        "settings": {
+          "enable_markdown": true
+        }
+      }
+    },
+    "workflow": [
+      {
+        "id": "query_generation",
+        "name": "Research Query Generation",
+        "tool": "claude",
+        "description": "Generate comprehensive research queries using Claude's analytical capabilities",
+        "tool_usage": "1. Create a new conversation with Claude\n2. Use the provided prompt template\n3. Review and refine generated queries\n",
+        "prompt": "**Role:** You are a market research specialist tasked with generating 5 specific, standalone search queries to analyze the following target market:\n\n<target_market>\n{{target_market}}\n</target_market>\n\n**Task Requirements:**\n- **Self-Contained:** Each query must include all necessary context to stand alone.\n- **Different Aspects:** Focus on a different aspect of market analysis for each query (e.g., market size, trends, segments, competitors, consumer behavior).\n- **Current Year Data:** Target data from current year.\n\n**Instructions:**\n- **Generate 5 Search Queries:** No need to include the planning process; focus on producing the final queries.\n- **Formatting:** Present each query on a separate line, numbered from 1 to 5.\n- **Style:** Keep queries concise and consistent in format.\n\nPlease generate the 5 search queries accordingly.\n",
+        "output_handling": "Copy queries for next step",
+        "notes": "Ensure queries cover market size, competitors, trends, consumer behavior, and technology/innovation aspects"
+      },
+      {
+        "id": "setup_document",
+        "name": "Research Document Setup",
+        "tool": "google_docs",
+        "description": "Create and format Google Doc for research documentation",
+        "tool_usage": "1. Create new Google Doc\n2. Set title format: \"[Current Date] - [Target Market] - Market Analysis Research\"\n   Example: \"2024-11-25 - Smart Home Security - Market Analysis Research\"\n3. For each query from previous step:\n   a. Paste query text\n   b. Format as Heading 1\n   c. Press Enter twice to leave space for response\n   d. Ensure normal text formatting is set for response area\n",
+        "notes": "Double-check formatting settings after each query addition"
+      },
+      {
+        "id": "research_execution",
+        "name": "Research Data Collection",
+        "tool": "perplexity",
+        "description": "Execute research queries and document findings",
+        "input_source": "queries from query_generation step",
+        "tool_usage": "For each research query in the Google Doc:\n1. Copy query text\n2. Execute in Perplexity\n3. Wait for complete response\n4. Click 'Copy' button in Perplexity response\n5. Return to Google Doc\n6. Paste response under corresponding query heading\n7. Add blank line before next query section\n",
+        "output_handling": "Save document as PDF when complete"
+      },
+      {
+        "id": "synthesis_analysis",
+        "name": "Report Generation",
+        "tool": "chatgpt",
+        "description": "Synthesize research findings into comprehensive market analysis",
+        "input_source": "PDF from research_execution step",
+        "tool_usage": "1. Upload research PDF to ChatGPT\n2. Use the provided analysis prompt\n3. Review output for completeness\n",
+        "prompt": "You are a seasoned market analyst tasked with creating a comprehensive analysis based on provided market research data. Your analysis should be thorough, insightful, and reference specific data points from the research.\n\nThe market research data that you need to analyze is attached.\nPlease create a comprehensive market analysis report based on this data. Your report should include the following sections:\n\n# Market Analysis Report Background\n\n## Key Data Points\n### Key Data Points for Executive Summary\n[Extract and list key data points]\n\n### Key Data Points for Market Overview\n[Extract and list key data points]\n\n### Key Data Points for Strategic Implications\n[Extract and list key data points]\n\n## Sections Analysis\n### Section Analysis for Executive Summary\n[Detailed analysis]\n\n### Section Analysis for Market Overview\n[Detailed analysis]\n\n### Section Analysis for Strategic Implications\n[Detailed analysis]\n\n# Market Analysis Report\n\n## 1. Executive Summary\n- Market Size and Growth\n- Key Drivers\n- Major Trends\n\n## 2. Market Overview\n- Detailed Segmentation\n- Growth Drivers\n- Constraints\n\n## 3. Strategic Implications\n- Market Opportunities\n- Entry Barriers\n- Success Factors\n\nInstructions:\n1. Begin by carefully reading the provided market research data.\n2. Extract and categorize key data points.\n3. Review and identify missing important data points.\n4. For each section analysis:\n   - Break down thought process and findings\n   - Connect data points to conclusions\n   - Identify gaps and inconsistencies\n5. Review and improve analyses.\n6. Create final report with specific data point references.\n\nPlease proceed with your analysis and report.\n",
+        "notes": "Ensure all data points are properly referenced in the final report"
+      }
+    ],
+    "tips": [
+      "Review queries before execution to ensure comprehensive coverage",
+      "Double-check formatting in Google Doc after each paste",
+      "Let Perplexity fully complete its response before copying",
+      "Review the full research document before running the synthesis"
+    ],
+    "examples": [
+      {
+        "parameters": {
+          "target_market": "US smart home security market",
+          "time_horizon": "2024-2027"
+        },
+        "sample_queries": [
+          "What is the total market size of the US smart home security systems industry in 2024, including DIY and professional segments, and what are the projected growth rates through 2027?",
+          "Who are the largest smart home security companies in the US market as of 2024? Compare market share, revenue, and product offerings."
+        ]
+      }
+    ],
+    "author": "yaniv-golan",
+    "path": "yaniv-golan/market-analysis",
+    "readme": "# Market Analysis Recipe\n\n> \"When I needed to analyze the US smart home security market, this approach cut my research time from days to hours.\" - Sarah\n\nA systematic approach to market analysis that combines multiple AI tools to efficiently gather and synthesize market research. This recipe uses Claude for query generation, Perplexity for research, and ChatGPT for synthesis to create comprehensive market analysis reports.\n\n## Quick Start\n\n1. Ensure you have access to:\n   - Claude (3.5 Sonnet or higher)\n   - Perplexity (Pro recommended)\n   - ChatGPT (GPT-4)\n   - Google Docs\n\n2. Define your target market (required parameter)\n\n   ```yaml\n   target_market: \"US smart home security market\"\n   ```\n\n3. Follow the workflow:\n   1. Generate research queries with Claude\n   2. Set up Google Doc with proper formatting\n   3. Execute research in Perplexity\n   4. Synthesize findings with ChatGPT\n\n## Time & Tools\n\n- **Time to Execute**: 15-20 minutes\n- **Tools Required**: 4 (Claude, Perplexity, ChatGPT, Google Docs)\n\n## Parameters\n\n| Parameter | Required | Default | Description |\n|-----------|----------|---------|-------------|\n| target_market | Yes | - | The specific market to analyze |\n| time_horizon | No | \"3 years\" | Future time period for projections |\n\n## Workflow Steps\n\n### 1. Query Generation (Claude)\n\nUses Claude to generate 5 focused research queries covering different aspects of the market:\n\n- Market size and growth\n- Competitive landscape\n- Consumer trends\n- Growth drivers\n- Technology/innovation\n\n### 2. Document Setup (Google Docs)\n\nCreates a structured document for research collection:\n\n- Name your google doc with a meaningful name. Consider using the following format: \"[Date] - [Topic] - Market Analysis Research\"\n- Example: \"2024-11-25 - Smart Home Security - Market Analysis Research\"\n- Proper formatting for queries and responses (H1 for queries, normal text for responses)\n\n### 3. Research Execution (Perplexity)\n\nSystematically gathers data for each query:\n\n- Captures complete responses using the Copy button at the bottom of the response\n- Maintains organized documentation\n\n### 4. Analysis Synthesis (ChatGPT)\n\nGenerates comprehensive market analysis with:\n\n- Executive Summary\n- Market Overview\n- Strategic Implications\n\n## Output Structure\n\nThe final analysis includes:\n\n```markdown\n# Market Analysis Report\n## 1. Executive Summary\n- Market Size and Growth\n- Key Drivers\n- Major Trends\n\n## 2. Market Overview\n- Detailed Segmentation\n- Growth Drivers\n- Constraints\n\n## 3. Strategic Implications\n- Market Opportunities\n- Entry Barriers\n- Success Factors\n```\n\n## Best Practices\n\n1. Query Generation\n   - Review and refine queries before execution\n   - Ensure coverage of all key market aspects\n\n2. Document Organization\n   - Double-check formatting after each paste\n   - Add clear section breaks between queries\n   - Maintain consistent heading hierarchy\n\n3. Research Execution\n   - Let Perplexity complete its response fully\n   - Verify data point consistency\n\n4. Analysis Synthesis\n   - Review all data before synthesis\n   - Ensure data points are properly referenced\n   - Maintain logical flow in analysis\n\n## Tool Requirements\n\n### Claude\n\n- Model: Claude 3.5 Sonnet\n- Purpose: Query generation\n- Key setting: None required\n\n### Perplexity\n\n- Focus: Web\n- Pro account: Recommended\n- Purpose: Research execution\n\n### ChatGPT\n\n- Model: GPT-4\n- Purpose: Analysis synthesis\n- Web search: Not required\n\n### Google Docs\n\n- Purpose: Research documentation\n- Settings: Markdown support enabled\n\n## Troubleshooting\n\nCommon issues and solutions:\n\n1. **Formatting issues in Google Docs**\n   - Make sure the style is set to \"Normal text\" before pasting.\n   - Tools | Prefences | Enable Markdown\n   - Edit | Past as Markdown\n\n2. **Inconsistent data points**\n   - Solution: Cross-reference across multiple queries\n   - Prevention: Include date ranges in queries\n\n## Recipe Variations\n\n1. **Quick Analysis**\n   - Reduce queries to 3 key aspects\n   - Focus on high-level metrics\n   - Use shorter time horizons\n\n2. **Deep Dive**\n   - Add competitor-specific queries\n   - Include patent/technology analysis\n   - Expand regional coverage\n\n## Credits\n\n## Support\n\nFor issues or suggestions:\n\n1. Use GitHub Issues for bugs/feature requests\n2. Use GitHub Discussions for usage questions\n3. Check existing discussions before posting\n\n## License\n\nMIT License - Feel free to modify and reuse\n"
+  }
+]
