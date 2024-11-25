@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate README.md files from recipe.yaml and description.md (if exists)
+Generate README.md files from recipe.yaml, workflow.mmd, and description.md
 """
 
 import os
@@ -8,57 +8,35 @@ import sys
 import yaml
 from pathlib import Path
 
-def generate_mermaid_diagram(workflow):
-    """Generate Mermaid diagram from workflow steps."""
-    mermaid = 'graph TD\n'
-    
-    # Add nodes and connections
-    for i, step in enumerate(workflow):
-        step_id = step['id']
-        step_name = step['name']
-        tool = step['tool']
-        
-        # Add node
-        mermaid += f'    {step_id}["{step_name}<br>({tool})"]\n'
-        
-        # Add connection to next step
-        if i < len(workflow) - 1:
-            next_step = workflow[i + 1]
-            mermaid += f'    {step_id} -->|{step.get("output_handling", "Output")}| {next_step["id"]}\n'
-    
-    return mermaid
+def read_file_if_exists(path):
+    """Read file content if it exists, return empty string otherwise."""
+    try:
+        with open(path, 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return ''
 
-def generate_parameters_table(parameters):
-    """Generate markdown table for parameters."""
-    table = '| Parameter | Required | Description | Example |\n'
-    table += '|-----------|----------|-------------|----------|\n'
+def generate_readme(recipe_data, workflow_diagram, description=''):
+    """Generate complete README content."""
+    parameters_table = '| Parameter | Required | Description | Example |\n'
+    parameters_table += '|-----------|----------|-------------|----------|\n'
     
-    for param in parameters:
+    for param in recipe_data['parameters']:
         required = 'Yes' if param.get('required', False) else 'No'
-        table += f'| {param["name"]} | {required} | {param["description"]} | {param["example"]} |\n'
+        parameters_table += f"| {param['name']} | {required} | {param['description']} | {param['example']} |\n"
     
-    return table
-
-def generate_tools_section(tools):
-    """Generate tools section."""
-    section = ''
-    for tool_name, tool_info in tools.items():
-        section += f'### {tool_name}\n\n'
+    # Generate tools section
+    tools_section = ''
+    for tool_name, tool_info in recipe_data['tools'].items():
+        tools_section += f'### {tool_name}\n\n'
         if 'used_for' in tool_info:
             for use in tool_info['used_for']:
-                section += f'- {use}\n'
+                tools_section += f'- {use}\n'
         if 'settings' in tool_info:
-            section += '\n**Settings:**\n\n'
+            tools_section += '\n**Settings:**\n\n'
             for setting, value in tool_info['settings'].items():
-                section += f'- {setting}: {value}\n'
-        section += '\n'
-    return section
-
-def generate_readme(recipe_data, description=''):
-    """Generate complete README content."""
-    workflow_diagram = generate_mermaid_diagram(recipe_data['workflow'])
-    parameters_table = generate_parameters_table(recipe_data['parameters'])
-    tools_section = generate_tools_section(recipe_data['tools'])
+                tools_section += f'- {setting}: {value}\n'
+        tools_section += '\n'
     
     readme = f"""# {recipe_data['name']}
 
@@ -69,6 +47,9 @@ def generate_readme(recipe_data, description=''):
 ## Workflow
 
 ```mermaid
+---
+title: Workflow
+---
 {workflow_diagram}
 ```
 
@@ -81,7 +62,6 @@ def generate_readme(recipe_data, description=''):
 {tools_section}
 
 ## Workflow Steps
-
 """
     
     # Add workflow steps
@@ -120,26 +100,22 @@ def generate_readme(recipe_data, description=''):
 
 def process_recipe_dir(recipe_dir):
     """Process a single recipe directory."""
-    yaml_path = recipe_dir / 'recipe.yaml'
-    description_path = recipe_dir / 'description.md'
-    readme_path = recipe_dir / 'README.md'
-    
     try:
-        # Read recipe.yaml
-        with open(yaml_path, 'r') as f:
+        # Read required files
+        with open(recipe_dir / 'recipe.yaml', 'r') as f:
             recipe_data = yaml.safe_load(f)
+            
+        # Read workflow.mmd
+        workflow_diagram = read_file_if_exists(recipe_dir / 'workflow.mmd')
         
         # Read description.md if it exists
-        description = ''
-        if description_path.exists():
-            with open(description_path, 'r') as f:
-                description = f.read()
+        description = read_file_if_exists(recipe_dir / 'description.md')
         
         # Generate README content
-        readme_content = generate_readme(recipe_data, description)
+        readme_content = generate_readme(recipe_data, workflow_diagram, description)
         
         # Write README.md
-        with open(readme_path, 'w') as f:
+        with open(recipe_dir / 'README.md', 'w') as f:
             f.write(readme_content)
             
         return None
