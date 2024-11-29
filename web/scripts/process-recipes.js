@@ -142,7 +142,9 @@ function processRecipe(recipe, tools) {
     if (!recipe.workflow) return recipe;
 
     recipe.workflow = recipe.workflow.map((step) => {
-        const toolId = step.tool;
+        // Handle both formats: string ID and object with name
+        const toolId = typeof step.tool === 'string' ? step.tool : step.tool.name.toLowerCase();
+
         if (!toolId || !tools[toolId]) {
             console.warn(`Tool ${toolId} not found for step ${step.id}`);
             return step;
@@ -152,12 +154,12 @@ function processRecipe(recipe, tools) {
         let settings = {};
 
         // For tools with models (like Claude, ChatGPT)
-        if (toolConfig.models && step.model) {
-            const modelConfig = toolConfig.models.find(m => m.name === step.model);
+        if (toolConfig.models && step.tool.model) {
+            const modelConfig = toolConfig.models.find(m => m.name === step.tool.model);
             if (modelConfig) {
                 settings = { ...modelConfig.settings };
             } else {
-                console.warn(`Model ${step.model} not found for tool ${toolId}`);
+                console.warn(`Model ${step.tool.model} not found for tool ${toolId}`);
             }
         }
         // For tools with default settings (like Perplexity, Google Docs)
@@ -166,8 +168,8 @@ function processRecipe(recipe, tools) {
         }
 
         // Apply any step-specific setting overrides
-        if (step.settings) {
-            settings = { ...settings, ...step.settings };
+        if (step.tool.settings) {
+            settings = { ...settings, ...step.tool.settings };
         }
 
         // Use the processTool function to get consistent icon handling
