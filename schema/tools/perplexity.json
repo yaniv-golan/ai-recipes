@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Perplexity Tool Schema",
+    "allOf": [
+        {
+            "$ref": "../tool-schema.json"
+        },
+        {
+            "type": "object",
+            "required": [
+                "default_settings"
+            ],
+            "properties": {
+                "default_settings": {
+                    "type": "object",
+                    "required": [
+                        "focus",
+                        "enable_pro"
+                    ],
+                    "properties": {
+                        "focus": {
+                            "type": "string",
+                            "enum": [
+                                "Web",
+                                "Academic",
+                                "Math",
+                                "Writing",
+                                "Video",
+                                "Social"
+                            ]
+                        },
+                        "enable_pro": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false
+        }
+    ]
+}

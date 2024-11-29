@@ -1,4 +1,4 @@
-name: market-analysis
+name: Market Analysis
 description: "A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports."
 
 tags:

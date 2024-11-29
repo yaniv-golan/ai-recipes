@@ -1,8 +1,8 @@
 [
   {
     "id": "yaniv-golan/competitive-intelligence",
-    "title": "competitive-intelligence",
-    "description": "A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports.",
+    "title": "Competitive Intelligence",
+    "description": "# Competitive Intelligence Workflow\n\nThis workflow provides a systematic approach to competitive intelligence gathering and analysis, leveraging the unique capabilities of multiple AI tools to create comprehensive competitive analysis reports.\n\n## Overview\n\nThe workflow combines three powerful AI tools in a synergistic manner:\n\n- Claude's analytical capabilities for generating targeted research queries\n- Perplexity's advanced research capabilities for gathering accurate, up-to-date competitive information\n- ChatGPT's synthesis abilities for creating cohesive, insightful competitive analysis reports\n\n## Key Benefits\n\n1. **Structured Research Process**: The workflow follows a methodical approach, ensuring comprehensive coverage of all critical competitive aspects including market share, product comparisons, strategic positioning, and customer feedback.\n\n2. **Data-Driven Analysis**: By leveraging Perplexity's research capabilities, the workflow ensures that all competitive insights are based on current, factual data rather than outdated or speculative information.\n\n3. **Comprehensive Coverage**: The analysis covers multiple dimensions of competitive intelligence:\n   - Market share and revenue analysis\n   - Product and feature comparisons\n   - Pricing strategies and models\n   - Strategic positioning\n   - Customer sentiment and feedback\n\n4. **Actionable Insights**: The final output provides not just data, but actionable competitive intelligence that can inform strategic decision-making.\n\nThis workflow is particularly valuable for businesses needing to maintain a deep understanding of their competitive landscape, whether for strategic planning, product development, or market positioning purposes.\n",
     "tags": [
       "competitive-intelligence",
       "competitor-analysis",
@@ -14,14 +14,26 @@
   },
   {
     "id": "yaniv-golan/market-analysis",
-    "title": "market-analysis",
-    "description": "A systematic approach to market analysis that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive market analysis reports.",
+    "title": "Market Analysis",
+    "description": "# Market Analysis Workflow\n\nThis workflow offers a systematic approach to market analysis, combining advanced AI tools to produce comprehensive, data-driven market research reports. It's designed to help businesses understand market dynamics, opportunities, and trends with unprecedented depth and efficiency.\n\n## Overview\n\nThe workflow orchestrates three AI tools in a complementary sequence:\n\n- Claude's analytical prowess for developing targeted market research queries\n- Perplexity's robust research capabilities for gathering current market data and insights\n- ChatGPT's synthesis abilities for creating coherent, comprehensive market analysis reports\n\n## Key Benefits\n\n1. **Comprehensive Market Understanding**: The workflow ensures thorough coverage of critical market aspects:\n   - Market size and growth projections\n   - Competitive landscape analysis\n   - Consumer behavior patterns\n   - Technology trends and innovation\n   - Industry-specific dynamics\n\n2. **Forward-Looking Analysis**: By incorporating time horizon parameters, the analysis provides not just current market snapshots but also future projections and trend analysis, enabling better strategic planning.\n\n3. **Data-Driven Insights**: The workflow leverages Perplexity's research capabilities to gather current, factual market data, ensuring that analysis and projections are based on reliable information rather than speculation.\n\n4. **Strategic Value**: The final output delivers actionable market intelligence that can inform:\n   - Market entry strategies\n   - Product development roadmaps\n   - Investment decisions\n   - Business expansion plans\n   - Competitive positioning\n\nThis workflow is particularly valuable for businesses conducting market research, whether for new market entry, product launches, or strategic planning purposes. It provides a structured approach to gathering and analyzing market intelligence, helping organizations make informed decisions based on comprehensive market understanding.\n",
     "tags": [
       "market-research",
       "market-analysis",
       "competitive-intelligence",
       "research-workflow",
       "data-synthesis"
+    ],
+    "author": "yaniv-golan"
+  },
+  {
+    "id": "yaniv-golan/phd-assignment",
+    "title": "phd-assignment",
+    "description": "Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with P1",
+    "tags": [
+      "research",
+      "academic",
+      "pdf",
+      "summarization"
     ],
     "author": "yaniv-golan"
   }

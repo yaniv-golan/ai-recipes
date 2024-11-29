@@ -1,0 +1,6 @@
+id: perplexity
+name: Perplexity AI
+description: AI-powered search engine for research and information gathering
+default_settings:
+  focus: Web
+  enable_pro: true 

@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Base Tool Schema",
+    "type": "object",
+    "required": [
+        "id",
+        "name",
+        "icon"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "Unique identifier for the tool, used in recipes",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+        },
+        "name": {
+            "type": "string",
+            "description": "Human-readable name for the tool"
+        },
+        "description": {
+            "type": "string",
+            "description": "Description of what the tool does"
+        },
+        "icon": {
+            "type": "string",
+            "description": "Path to the tool's icon file relative to the tool's directory. Must be a square PNG or SVG file, at least 32x32 pixels",
+            "pattern": "^icon\\.(png|svg)$"
+        }
+    }
+}

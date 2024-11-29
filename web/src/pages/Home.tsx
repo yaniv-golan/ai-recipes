@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RecipeCard } from '../components/RecipeCard';
 import { SearchBar } from '../components/SearchBar';
+import { useLocation } from 'react-router-dom';
 
 interface Recipe {
     name: string;
@@ -15,6 +16,16 @@ export function Home() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const location = useLocation();
+
+    useEffect(() => {
+        // Get tag from URL if present
+        const params = new URLSearchParams(location.search);
+        const tagFromUrl = params.get('tag');
+        if (tagFromUrl) {
+            setSearchQuery(tagFromUrl);
+        }
+    }, [location.search]);
 
     useEffect(() => {
         let mounted = true;
@@ -49,6 +60,10 @@ export function Home() {
         };
     }, []);
 
+    const handleTagClick = (tag: string) => {
+        setSearchQuery(tag);
+    };
+
     const filteredRecipes = recipes.filter(recipe => {
         const query = searchQuery.toLowerCase();
         return (
@@ -62,24 +77,7 @@ export function Home() {
         return (
             <div className="p-8">
                 <h1 className="text-3xl font-bold mb-8">AI Recipe Hub</h1>
-                <SearchBar
-                    className="mb-8"
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    disabled={true}
-                />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((n) => (
-                        <div
-                            key={n}
-                            className="bg-white rounded-lg shadow-md p-6 animate-pulse"
-                        >
-                            <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                            <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                        </div>
-                    ))}
-                </div>
+                <div className="text-gray-600 mb-4">Loading recipes...</div>
             </div>
         );
     }
@@ -91,7 +89,6 @@ export function Home() {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                     <h2 className="text-lg font-medium text-red-800">Error loading recipes</h2>
                     <p className="text-sm text-red-600 mt-1">{error}</p>
-                    <p className="text-sm text-gray-600 mt-2">Please check the console for more details</p>
                 </div>
             </div>
         );
@@ -137,6 +134,7 @@ export function Home() {
                             author={recipe.author}
                             path={recipe.path}
                             tags={recipe.tags}
+                            onTagClick={handleTagClick}
                         />
                     ))}
                 </div>

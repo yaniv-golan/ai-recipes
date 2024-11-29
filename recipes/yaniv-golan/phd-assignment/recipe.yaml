@@ -1,0 +1,54 @@
+name: phd-assignment
+description: Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with P1
+tags:
+  - research
+  - academic
+  - pdf
+  - summarization
+
+parameters:
+  - name: pdf_files
+    description: List of PDF files to process
+    required: true
+  - name: research_question
+    description: The research question to be answered
+    required: true
+  - name: summary_prompt
+    description: Custom prompt for summarizing PDFs (optional)
+    required: false
+
+workflow:
+  - step: 1
+    name: Summarize PDFs
+    tool: claude
+    model: Claude 3 Opus
+    settings:
+      enable_artifacts: true
+    input: For each PDF file - System - You are a helpful AI research assistant. Your task is to summarize academic papers clearly and accurately. User - Please provide a comprehensive summary of this academic paper, focusing on the main findings, methodology, and conclusions. Include any relevant statistics or data that might be useful for meta-analysis.
+    output: A detailed summary of each PDF
+
+  - step: 2
+    name: Collect Summaries
+    tool: google_docs
+    input: Create a new Google Doc titled Research Summaries - [Date]. Add all PDF summaries with clear section headers
+    output: A Google Doc containing all summaries in an organized format
+
+  - step: 3
+    name: Generate Answer
+    tool: chatgpt
+    model: o1-preview
+    input: Using P1 model - Research Question - [research_question]. Based on the following paper summaries, please provide a comprehensive answer - [Paste summaries from Google Doc]
+    output: A comprehensive answer to the research question
+
+tips:
+  - Use consistent section headers in Google Docs to make the summaries easy to navigate
+  - Consider adding tags or keywords to each summary for better organization
+  - If the PDFs are large, you may want to focus Claude's summary on specific sections
+  - Make sure to include page numbers or section references in the summaries for easy verification
+
+examples:
+  - name: Literature Review
+    description: Using the workflow to conduct a literature review on machine learning applications in healthcare
+    parameters:
+      research_question: What are the main applications and challenges of deep learning in medical imaging?
+    workflow_example: 1. Summarize 10 recent papers on deep learning in medical imaging. 2. Organize summaries in Google Docs with sections for different imaging modalities. 3. Generate a comprehensive answer focusing on key applications and technical challenges

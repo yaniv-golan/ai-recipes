@@ -1,0 +1,5 @@
+id: google_docs
+name: Google Docs
+description: Google's collaborative document editing platform
+default_settings:
+  enable_markdown: true 

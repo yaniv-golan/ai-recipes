@@ -1,4 +1,4 @@
-name: competitive-intelligence
+name: Competitive Intelligence
 description: "A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports."
 
 tags:
@@ -24,41 +24,11 @@ parameters:
     required: false
     example: "ADT, Ring, Vivint"
 
-tools:
-  claude:
-    used_for:
-      - "Query generation"
-      - "Analysis framework development"
-    settings:
-      model: "Claude 3.5 Sonnet"
-
-  perplexity:
-    used_for:
-      - "Competitor research execution"
-      - "Data gathering"
-    settings:
-      focus: "Web"
-      enable_pro: true
-  
-  chatgpt:
-    used_for:
-      - "Data synthesis"
-      - "Report generation"
-    settings:
-      model: "GPT-4o"
-      enable_web_search: false
-  
-  google_docs:
-    used_for:
-      - "Research documentation"
-      - "Report organization"
-    settings:
-      enable_markdown: true
-
 workflow:
   - id: "query_generation"
     name: "Competitive Query Generation"
     tool: "claude"
+    model: "Claude 3.5 Sonnet"
     description: "Generate focused competitor analysis queries"
     tool_usage: |
       1. Create a new conversation with Claude
@@ -120,6 +90,7 @@ workflow:
   - id: "competitive_assessment"
     name: "Competitive Analysis Generation"
     tool: "chatgpt"
+    model: "GPT-4o"
     description: "Synthesize research findings into comprehensive competitive assessment"
     input_source: "PDF from research_execution step"
     tool_usage: |

@@ -6,8 +6,11 @@ mermaid.initialize({
     theme: 'default',
     securityLevel: 'loose',
     flowchart: {
-        curve: 'basis',
-        padding: 20
+        htmlLabels: true,
+        curve: 'linear',
+        padding: 20,
+        nodeSpacing: 50,
+        rankSpacing: 50
     }
 });
 
@@ -17,30 +20,46 @@ interface MermaidViewerProps {
 }
 
 const MermaidViewer: React.FC<MermaidViewerProps> = ({ chart, className = '' }) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+    const elementId = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
     useEffect(() => {
-        const renderChart = async () => {
-            if (containerRef.current) {
-                // Clear previous content
-                containerRef.current.innerHTML = '';
-                try {
-                    const { svg } = await mermaid.render('mermaid-svg', chart);
-                    containerRef.current.innerHTML = svg;
-                } catch (error) {
-                    console.error('Mermaid rendering error:', error);
-                    containerRef.current.innerHTML = '<div class="text-red-500">Error rendering workflow diagram</div>';
+        const renderDiagram = async () => {
+            try {
+                const element = document.getElementById(elementId.current);
+                if (!element) return;
+
+                // First clear the element
+                element.innerHTML = '';
+
+                // Create a new div with the mermaid class
+                const diagramDiv = document.createElement('div');
+                diagramDiv.className = 'mermaid';
+                diagramDiv.textContent = chart;
+                element.appendChild(diagramDiv);
+
+                // Render the diagram
+                await mermaid.init(undefined, '.mermaid');
+            } catch (error) {
+                console.error('Mermaid rendering error:', error);
+                const element = document.getElementById(elementId.current);
+                if (element) {
+                    element.innerHTML = `
+                        <div class="text-red-500 p-4">
+                            Error rendering workflow diagram
+                            <pre class="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">${chart}</pre>
+                        </div>
+                    `;
                 }
             }
         };
 
-        renderChart();
+        renderDiagram();
     }, [chart]);
 
     return (
         <div
-            ref={containerRef}
-            className={`mermaid-viewer overflow-x-auto ${className}`}
+            id={elementId.current}
+            className={className}
         />
     );
 };

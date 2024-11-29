@@ -1,0 +1,14 @@
+id: claude
+name: Claude AI Assistant
+description: Anthropic's Claude AI model for text analysis and generation
+default_model: Claude 3
+models:
+  - name: Claude 3
+    settings:
+      enable_artifacts: false
+  - name: Claude 3.5 Sonnet
+    settings:
+      enable_artifacts: false
+  - name: Claude 3 Opus
+    settings:
+      enable_artifacts: true 

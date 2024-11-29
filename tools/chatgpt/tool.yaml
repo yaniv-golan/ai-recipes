@@ -1,0 +1,11 @@
+id: chatgpt
+name: ChatGPT
+description: OpenAI's GPT models for conversational AI and text generation
+default_model: GPT-4o
+models:
+  - name: GPT-4o
+    settings:
+      enable_web_search: false
+  - name: o1-preview
+    settings:
+      enable_web_search: false 

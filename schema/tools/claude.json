@@ -1,0 +1,61 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Claude Tool Schema",
+    "allOf": [
+        {
+            "$ref": "../tool-schema.json"
+        },
+        {
+            "type": "object",
+            "required": [
+                "default_model",
+                "models"
+            ],
+            "properties": {
+                "default_model": {
+                    "type": "string",
+                    "enum": [
+                        "Claude 3",
+                        "Claude 3.5 Sonnet",
+                        "Claude 3 Opus"
+                    ]
+                },
+                "models": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "settings"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "enum": [
+                                    "Claude 3",
+                                    "Claude 3.5 Sonnet",
+                                    "Claude 3 Opus"
+                                ]
+                            },
+                            "settings": {
+                                "type": "object",
+                                "required": [
+                                    "enable_artifacts"
+                                ],
+                                "properties": {
+                                    "enable_artifacts": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "additionalProperties": false
+                    },
+                    "minItems": 1
+                }
+            },
+            "additionalProperties": false
+        }
+    ]
+}
