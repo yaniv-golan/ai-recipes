@@ -1,0 +1,63 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Claude Tool Schema",
+    "allOf": [
+        {
+            "$ref": "../tool-schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "model": {
+                    "type": "string",
+                    "enum": [
+                        "Claude 3.5 Sonnet (New)",
+                        "Claude 3 Haiku",
+                        "Claude 3 Opus",
+                        "Claude 3.5 Sonnet (June 2024)"
+                    ]
+                },
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "enable_artifacts": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable file upload and download capabilities."
+                        },
+                        "enable_analysis": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable Analysis Tool for data analysis and visualization."
+                        },
+                        "enable_latex": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable LaTeX rendering for mathematical equations."
+                        }
+                    },
+                    "additionalProperties": false
+                },
+                "tool_usage": {
+                    "type": "string",
+                    "description": "How the tool should be used in this step"
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "The prompt to send to Claude"
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "tool_usage",
+                "prompt"
+            ]
+        }
+    ]
+}
