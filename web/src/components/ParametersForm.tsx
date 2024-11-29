@@ -30,10 +30,6 @@ export function ParametersForm({ parameters, onChange }: ParametersFormProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-lg font-medium text-gray-900">Parameters</h2>
-            </div>
-
             {parameters.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <p className="text-gray-500 mb-4">No parameters added yet.</p>

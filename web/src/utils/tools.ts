@@ -1,5 +1,20 @@
 import { Tool } from '../types/workflow';
 
+export type ToolSchema = {
+    properties: {
+        model?: {
+            enum?: string[];
+        };
+        settings?: {
+            properties: Record<string, {
+                type: string;
+                description: string;
+                enum?: string[];
+            }>;
+        };
+    };
+};
+
 export type ToolConfig = {
     id: string;
     name: string;
@@ -9,29 +24,81 @@ export type ToolConfig = {
     availableSettings?: Record<string, string>;
 };
 
-// Import all tool.yaml files from the public directory
+// Import all tool.yaml files
 const toolConfigs = import.meta.glob<ToolConfig>('../../../tools/*/tool.yaml', {
     eager: true,
     import: 'default'
 });
 
-console.log('Raw tool configs:', toolConfigs);
+// Function to load tool schemas
+async function loadToolSchemas() {
+    const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'] }] }> = {};
 
-// Convert the imported configs into our format
+    try {
+        // Load base schema first
+        const baseSchemaResponse = await fetch('/ai-recipes/data/schemas/tool-schema.json');
+        const baseSchema = await baseSchemaResponse.json();
+
+        // Load individual tool schemas
+        const toolIds = Object.keys(toolConfigs).map(path => path.split('/').slice(-2)[0]);
+
+        for (const toolId of toolIds) {
+            try {
+                const response = await fetch(`/ai-recipes/data/schemas/${toolId}.json`);
+                if (response.ok) {
+                    schemas[toolId] = await response.json();
+                }
+            } catch (error) {
+                console.warn(`Failed to load schema for tool ${toolId}:`, error);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to load tool schemas:', error);
+    }
+
+    return schemas;
+}
+
+// Initialize tool configs with basic info first
 export const TOOL_CONFIGS = Object.fromEntries(
     Object.entries(toolConfigs).map(([path, config]) => {
-        const toolId = path.split('/').slice(-2)[0]; // Get the tool directory name
-        console.log('Processing tool:', { path, toolId, config });
+        const toolId = path.split('/').slice(-2)[0];
         return [
             toolId,
             {
                 ...config,
                 id: toolId,
-                icon: `/ai-recipes/data/tools/${toolId}/${config.icon}`
+                icon: `/ai-recipes/data/tools/${toolId}/${config.icon}`,
+                availableSettings: {}
             }
         ];
     })
 );
 
-// Debug: Log the loaded configurations
-console.log('Final tool configs:', TOOL_CONFIGS);
+// Load schemas and update tool configs
+loadToolSchemas().then(schemas => {
+    Object.entries(schemas).forEach(([toolId, schema]) => {
+        if (TOOL_CONFIGS[toolId]) {
+            const schemaProps = schema.allOf[1].properties;
+            const updatedConfig = {
+                ...TOOL_CONFIGS[toolId],
+                availableSettings: schemaProps?.settings?.properties
+                    ? Object.fromEntries(
+                        Object.entries(schemaProps.settings.properties).map(([key, value]) => [
+                            key,
+                            value.description
+                        ])
+                    )
+                    : {},
+                requiredFields: schema.allOf[1].required || []
+            };
+
+            // Only add models if they exist in the schema
+            if (schemaProps?.model?.enum) {
+                updatedConfig.models = schemaProps.model.enum;
+            }
+
+            TOOL_CONFIGS[toolId] = updatedConfig;
+        }
+    });
+});

@@ -36,7 +36,7 @@
                                 "boolean",
                                 "null"
                             ],
-                            "description": "Enable web search capabilities. true=required, false=disabled, null=doesn't matter"
+                            "description": "Enable web search capabilities."
                         }
                     },
                     "additionalProperties": false

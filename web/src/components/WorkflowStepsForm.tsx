@@ -73,8 +73,6 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900">Workflow Steps</h2>
-
             {steps.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg">
                     <p className="text-gray-500 mb-4">No steps added yet.</p>
@@ -204,18 +202,22 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                 />
                             </div>
 
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Prompt
-                                </label>
-                                <textarea
-                                    value={step.prompt}
-                                    onChange={(e) => updateStep(index, 'prompt', e.target.value)}
-                                    rows={3}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                    placeholder="Enter the prompt for this step (optional)"
-                                />
-                            </div>
+                            {TOOL_CONFIGS[step.tool.id]?.requiredFields?.includes('prompt') && (
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Prompt
+                                        <span className="text-red-600 ml-1">*</span>
+                                    </label>
+                                    <textarea
+                                        value={step.prompt}
+                                        onChange={(e) => updateStep(index, 'prompt', e.target.value)}
+                                        rows={3}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                        placeholder="Enter the prompt for this step"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             <div className="mt-4">
                                 <label className="block text-sm font-medium text-gray-700">

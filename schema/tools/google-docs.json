@@ -7,18 +7,16 @@
         },
         {
             "type": "object",
-            "required": [
-                "default_settings"
-            ],
             "properties": {
-                "default_settings": {
+                "settings": {
                     "type": "object",
-                    "required": [
-                        "enable_markdown"
-                    ],
                     "properties": {
                         "enable_markdown": {
-                            "type": "boolean"
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable Markdown formatting support in Google Docs."
                         }
                     },
                     "additionalProperties": false

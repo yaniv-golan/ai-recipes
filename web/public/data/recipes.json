@@ -31,8 +31,11 @@
         "id": "query_generation",
         "name": "Competitive Query Generation",
         "tool": {
-          "name": "claude",
-          "model": "Claude 3.5 Sonnet"
+          "id": "claude",
+          "name": "Claude",
+          "description": "Anthropic's Claude AI model for text analysis and generation",
+          "iconUrl": "./tools/claude/icon.svg",
+          "settings": {}
         },
         "description": "Generate focused competitor analysis queries",
         "tool_usage": "1. Create a new conversation with Claude\n2. Use the provided prompt template\n3. Review and refine generated queries\n",
@@ -44,7 +47,10 @@
         "id": "setup_document",
         "name": "Research Document Setup",
         "tool": {
-          "name": "google_docs",
+          "id": "google_docs",
+          "name": "Google Docs",
+          "description": "Google's collaborative document editing platform",
+          "iconUrl": "./tools/google_docs/icon.webp",
           "settings": {
             "enable_markdown": true
           }
@@ -58,8 +64,10 @@
         "id": "research_execution",
         "name": "Research Data Collection",
         "tool": {
-          "name": "perplexity",
-          "model": "Claude 3.5 Sonnet",
+          "id": "perplexity",
+          "name": "Perplexity AI",
+          "description": "AI-powered search engine with multiple models and focus modes",
+          "iconUrl": "./tools/perplexity/icon.svg",
           "settings": {
             "focus": "Academic",
             "enable_pro": true
@@ -75,8 +83,10 @@
         "id": "competitive_assessment",
         "name": "Competitive Analysis Generation",
         "tool": {
-          "name": "chatgpt",
-          "model": "GPT-4",
+          "id": "chatgpt",
+          "name": "ChatGPT",
+          "description": "OpenAI's GPT models for conversational AI and text generation",
+          "iconUrl": "./tools/chatgpt/icon.svg",
           "settings": {
             "enable_web_search": false
           }
@@ -140,8 +150,11 @@
         "id": "query_generation",
         "name": "Research Query Generation",
         "tool": {
-          "name": "claude",
-          "model": "Claude 3.5 Sonnet"
+          "id": "claude",
+          "name": "Claude",
+          "description": "Anthropic's Claude AI model for text analysis and generation",
+          "iconUrl": "./tools/claude/icon.svg",
+          "settings": {}
         },
         "description": "Generate comprehensive research queries using Claude's analytical capabilities",
         "tool_usage": "1. Create a new conversation with Claude\n2. Use the provided prompt template\n3. Review and refine generated queries\n",
@@ -153,7 +166,10 @@
         "id": "setup_document",
         "name": "Research Document Setup",
         "tool": {
-          "name": "google_docs",
+          "id": "google_docs",
+          "name": "Google Docs",
+          "description": "Google's collaborative document editing platform",
+          "iconUrl": "./tools/google_docs/icon.webp",
           "settings": {
             "enable_markdown": true
           }
@@ -167,7 +183,10 @@
         "id": "research_execution",
         "name": "Research Data Collection",
         "tool": {
-          "name": "perplexity",
+          "id": "perplexity",
+          "name": "Perplexity AI",
+          "description": "AI-powered search engine with multiple models and focus modes",
+          "iconUrl": "./tools/perplexity/icon.svg",
           "settings": {
             "focus": "Academic",
             "enable_pro": true
@@ -183,8 +202,10 @@
         "id": "synthesis_analysis",
         "name": "Report Generation",
         "tool": {
-          "name": "chatgpt",
-          "model": "GPT-4",
+          "id": "chatgpt",
+          "name": "ChatGPT",
+          "description": "OpenAI's GPT models for conversational AI and text generation",
+          "iconUrl": "./tools/chatgpt/icon.svg",
           "settings": {
             "enable_web_search": false
           }
@@ -249,8 +270,10 @@
         "id": "summarize_pdfs",
         "name": "Summarize PDFs",
         "tool": {
-          "name": "claude",
-          "model": "Claude 3.5 Sonnet",
+          "id": "claude",
+          "name": "Claude",
+          "description": "Anthropic's Claude AI model for text analysis and generation",
+          "iconUrl": "./tools/claude/icon.svg",
           "settings": {
             "enable_artifacts": true
           }
@@ -263,7 +286,10 @@
         "id": "collect_summaries",
         "name": "Collect Summaries",
         "tool": {
-          "name": "google_docs",
+          "id": "google_docs",
+          "name": "Google Docs",
+          "description": "Google's collaborative document editing platform",
+          "iconUrl": "./tools/google_docs/icon.webp",
           "settings": {
             "enable_markdown": true
           }
@@ -276,8 +302,10 @@
         "id": "generate_answer",
         "name": "Generate Answer",
         "tool": {
-          "name": "chatgpt",
-          "model": "GPT-4",
+          "id": "chatgpt",
+          "name": "ChatGPT",
+          "description": "OpenAI's GPT models for conversational AI and text generation",
+          "iconUrl": "./tools/chatgpt/icon.svg",
           "settings": {
             "enable_web_search": false
           }

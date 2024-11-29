@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'tools/**'
+      - 'schema/tools/**'
+      - 'schema/tool-schema.json'
   workflow_dispatch:
 
 jobs:
@@ -12,16 +14,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Create target directory
-        run: mkdir -p web/public/data/tools
+      # Create target directories
+      - name: Create target directories
+        run: |
+          mkdir -p web/public/data/tools
+          mkdir -p web/public/data/schemas
         
-      - name: Copy tool configurations
-        run: cp -r tools/* web/public/data/tools/
+      # Copy tool configurations and schemas
+      - name: Copy tool configurations and schemas
+        run: |
+          # Copy tool configurations
+          cp -r tools/* web/public/data/tools/
+          
+          # Copy tool schemas
+          cp schema/tool-schema.json web/public/data/schemas/
+          cp schema/tools/*.json web/public/data/schemas/
         
       - name: Commit changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add web/public/data/tools
-          git commit -m "Sync tool configurations" || echo "No changes to commit"
-          git push 
+          git add web/public/data/tools web/public/data/schemas
+          git commit -m "Sync tool configurations and schemas" || echo "No changes to commit"
+          git push

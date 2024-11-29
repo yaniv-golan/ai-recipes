@@ -15,12 +15,38 @@
                 "prompt": {
                     "type": "string",
                     "description": "The prompt to send to Perplexity"
+                },
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "focus": {
+                            "type": "string",
+                            "enum": [
+                                "Web",
+                                "Academic",
+                                "Math",
+                                "Writing",
+                                "Video",
+                                "Social"
+                            ],
+                            "description": "Focus mode for search results"
+                        },
+                        "enable_pro": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable Pro features for advanced capabilities"
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
             "required": [
                 "tool_usage",
                 "prompt"
-            ]
+            ],
+            "additionalProperties": false
         }
     ]
 }
