@@ -1,50 +1,114 @@
-# React + TypeScript + Vite
+# AI Recipes Web Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React-based web application for creating and managing AI workflow recipes.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Create and edit AI workflow recipes
+- Dynamic tool configuration loading
+- Real-time schema validation
+- Interactive workflow step editor
+- Recipe preview and export
 
-## Expanding the ESLint configuration
+## Prerequisites
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- Node.js 20.x or later
+- npm 10.x or later
 
-- Configure the top-level `parserOptions` property like this:
+## Setup
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Install dependencies:
+
+```bash
+npm install
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. Set up development environment:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+```bash
+# Copy tool configurations
+./scripts/sync-tools.sh
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+# Start development server
+npm run dev
 ```
+
+## Development
+
+The project uses:
+
+- Vite for development and building
+- React with TypeScript
+- Tailwind CSS for styling
+- JSON Schema for validation
+
+### Project Structure
+
+```
+web/
+├── public/
+│   └── data/        # Generated tool data
+│       ├── tools/   # Tool configurations and icons
+│       └── schemas/ # JSON schemas for validation
+├── src/
+│   ├── components/  # React components
+│   │   ├── MetadataForm.tsx      # Recipe metadata editor
+│   │   ├── ParametersForm.tsx    # Recipe parameters editor
+│   │   ├── ToolsForm.tsx         # Tool configuration editor
+│   │   └── WorkflowStepsForm.tsx # Workflow steps editor
+│   ├── pages/       # Page components
+│   ├── types/       # TypeScript types
+│   └── utils/
+│       └── tools.ts # Dynamic tool configuration loader
+└── scripts/         # Build scripts
+```
+
+### Tool Configuration
+
+Tools are configured through multiple layers:
+
+1. Base Configuration (`tool.yaml`):
+   - Basic tool identity (id, name, description)
+   - Icon specification
+
+2. Schema Definition (`schema/tools/*.json`):
+   - Required fields (tool_usage, prompt for AI tools)
+   - Available settings with descriptions
+   - Model options if applicable
+
+3. Dynamic Loading (`src/utils/tools.ts`):
+   - Loads tool configurations at runtime
+   - Validates against schemas
+   - Provides type-safe settings interface
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run process-recipes` - Process recipe files
+- `npm run lint` - Run ESLint
+
+## Building and Deployment
+
+1. Process recipes and tool configurations:
+
+```bash
+npm run process-recipes
+```
+
+2. Build the application:
+
+```bash
+npm run build
+```
+
+3. Deploy (automated via GitHub Actions):
+
+- Pushes to main branch trigger deployment
+- Uses GitHub Pages for hosting
+- Accessible at /ai-recipes/
+
+## Adding New Tools
+
+See the [tools README](../tools/README.md) for detailed instructions on adding new tools.
