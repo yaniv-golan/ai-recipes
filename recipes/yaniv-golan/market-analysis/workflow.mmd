@@ -1,0 +1,8 @@
+graph TD
+    query_generation["Research Query Generation<br>(claude)"]
+    query_generation -->|Copy queries for next step| setup_document
+    setup_document["Research Document Setup<br>(google_docs)"]
+    setup_document -->|Output| research_execution
+    research_execution["Research Data Collection<br>(perplexity)"]
+    research_execution -->|Save document as PDF when complete| synthesis_analysis
+    synthesis_analysis["Report Generation<br>(chatgpt)"]

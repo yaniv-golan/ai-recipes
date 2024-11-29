@@ -1,0 +1,6 @@
+graph TD
+    summarize_pdfs["Summarize PDFs<br>({'id': 'claude', 'name': 'Claude AI Assistant', 'description': "Anthropic's Claude AI model for text analysis and generation", 'iconUrl': './tools/claude/icon.svg', 'settings': {'enable_artifacts': True}})"]
+    summarize_pdfs -->|Output| collect_summaries
+    collect_summaries["Collect Summaries<br>({'id': 'google_docs', 'name': 'Google Docs', 'description': "Google's collaborative document editing platform", 'iconUrl': './tools/google_docs/icon.webp', 'settings': {'enable_markdown': True}})"]
+    collect_summaries -->|Output| generate_answer
+    generate_answer["Generate Answer<br>({'id': 'chatgpt', 'name': 'ChatGPT', 'description': "OpenAI's GPT models for conversational AI and text generation", 'iconUrl': './tools/chatgpt/icon.svg', 'settings': {'enable_web_search': False}})"]
