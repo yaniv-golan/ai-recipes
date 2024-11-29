@@ -34,8 +34,13 @@ jobs:
         working-directory: web
         run: |
           npm run build
-          ls -la dist
-
+          echo "Contents of current directory:"
+          ls -la
+          echo "Contents of dist directory:"
+          ls -la dist/
+          echo "Contents of dist/assets directory:"
+          ls -la dist/assets/
+ 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
