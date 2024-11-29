@@ -23,19 +23,18 @@ jobs:
           node-version: '20'
 
       - name: Install Dependencies
-        run: |
-          cd web
-          npm install
+        working-directory: web
+        run: npm install
 
       - name: Process Recipes
-        run: |
-          cd web
-          npm run process-recipes
+        working-directory: web
+        run: npm run process-recipes
 
       - name: Build
+        working-directory: web
         run: |
-          cd web
           npm run build
+          ls -la dist
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
