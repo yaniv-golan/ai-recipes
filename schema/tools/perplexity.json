@@ -7,36 +7,20 @@
         },
         {
             "type": "object",
-            "required": [
-                "default_settings"
-            ],
             "properties": {
-                "default_settings": {
-                    "type": "object",
-                    "required": [
-                        "focus",
-                        "enable_pro"
-                    ],
-                    "properties": {
-                        "focus": {
-                            "type": "string",
-                            "enum": [
-                                "Web",
-                                "Academic",
-                                "Math",
-                                "Writing",
-                                "Video",
-                                "Social"
-                            ]
-                        },
-                        "enable_pro": {
-                            "type": "boolean"
-                        }
-                    },
-                    "additionalProperties": false
+                "tool_usage": {
+                    "type": "string",
+                    "description": "How the tool should be used in this step"
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "The prompt to send to Perplexity"
                 }
             },
-            "additionalProperties": false
+            "required": [
+                "tool_usage",
+                "prompt"
+            ]
         }
     ]
 }

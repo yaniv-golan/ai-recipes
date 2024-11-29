@@ -5,7 +5,7 @@
     "required": [
         "id",
         "name",
-        "icon"
+        "tool_usage"
     ],
     "properties": {
         "id": {
@@ -21,10 +21,9 @@
             "type": "string",
             "description": "Description of what the tool does"
         },
-        "icon": {
+        "tool_usage": {
             "type": "string",
-            "description": "Path to the tool's icon file relative to the tool's directory. Must be a square PNG or SVG file, at least 32x32 pixels",
-            "pattern": "^icon\\.(png|svg)$"
+            "description": "How the tool should be used in this step"
         }
     }
 }

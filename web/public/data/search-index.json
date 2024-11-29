@@ -27,8 +27,8 @@
   },
   {
     "id": "yaniv-golan/phd-assignment",
-    "title": "phd-assignment",
-    "description": "Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with P1",
+    "title": "PhD Assignment",
+    "description": "Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with ChatGPT",
     "tags": [
       "research",
       "academic",

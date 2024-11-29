@@ -7,55 +7,57 @@
         },
         {
             "type": "object",
-            "required": [
-                "default_model",
-                "models"
-            ],
             "properties": {
-                "default_model": {
+                "model": {
                     "type": "string",
                     "enum": [
-                        "Claude 3",
-                        "Claude 3.5 Sonnet",
-                        "Claude 3 Opus"
+                        "Claude 3.5 Sonnet (New)",
+                        "Claude 3 Haiku",
+                        "Claude 3 Opus",
+                        "Claude 3.5 Sonnet (June 2024)"
                     ]
                 },
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "settings"
-                        ],
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "enum": [
-                                    "Claude 3",
-                                    "Claude 3.5 Sonnet",
-                                    "Claude 3 Opus"
-                                ]
-                            },
-                            "settings": {
-                                "type": "object",
-                                "required": [
-                                    "enable_artifacts"
-                                ],
-                                "properties": {
-                                    "enable_artifacts": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "additionalProperties": false
-                            }
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "enable_artifacts": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable file upload and download capabilities. true=required, false=disabled, null=doesn't matter"
                         },
-                        "additionalProperties": false
+                        "enable_analysis": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable Analysis Tool for data analysis and visualization. true=required, false=disabled, null=doesn't matter"
+                        },
+                        "enable_latex": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable LaTeX rendering for mathematical equations. true=required, false=disabled, null=doesn't matter"
+                        }
                     },
-                    "minItems": 1
+                    "additionalProperties": false
+                },
+                "tool_usage": {
+                    "type": "string",
+                    "description": "How the tool should be used in this step"
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "The prompt to send to Claude"
                 }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "required": [
+                "tool_usage",
+                "prompt"
+            ]
         }
     ]
 }

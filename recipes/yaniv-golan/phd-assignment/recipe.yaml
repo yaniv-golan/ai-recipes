@@ -1,5 +1,6 @@
-name: "phd-assignment"
-description: "Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with P1"
+name: "PhD Assignment"
+description: "Process multiple PDFs for academic research by summarizing with Claude, collecting in Google Docs, and generating final answer with ChatGPT"
+
 tags:
   - research
   - academic
@@ -8,58 +9,90 @@ tags:
 
 parameters:
   - name: pdf_files
-    description: List of PDF files to process
-    required: true
+    description: "List of PDF files to process"
+    example: "paper1.pdf, paper2.pdf, paper3.pdf"
+  
   - name: research_question
-    description: The research question to be answered
-    required: true
+    description: "The research question to be answered"
+    example: "What are the main applications and challenges of deep learning in medical imaging?"
+  
   - name: summary_prompt
-    description: Custom prompt for summarizing PDFs (optional)
-    required: false
+    description: "Custom prompt for summarizing PDFs (optional)"
+    default: "Please provide a comprehensive summary of this academic paper, focusing on the main findings, methodology, and conclusions."
 
 workflow:
-  - id: summarize_pdfs
+  - id: "summarize_pdfs"
     name: "Summarize PDFs"
     tool:
-      id: claude
-      name: "Claude AI Assistant"
-      description: "Anthropic's Claude AI model for text analysis and generation"
-      iconUrl: "./tools/claude/icon.svg"
+      name: "claude"
+      model: "Claude 3.5 Sonnet"
       settings:
         enable_artifacts: true
-    model: "Claude 3 Opus"
-    settings:
-      enable_artifacts: true
-    input: "For each PDF file - System - You are a helpful AI research assistant. Your task is to summarize academic papers clearly and accurately. User - Please provide a comprehensive summary of this academic paper, focusing on the main findings, methodology, and conclusions. Include any relevant statistics or data that might be useful for meta-analysis."
-    output: "A detailed summary of each PDF"
-    prompt: null
+    description: "Use Claude to generate comprehensive summaries of academic papers"
+    tool_usage: |
+      1. For each PDF file:
+         a. Upload the PDF to Claude
+         b. Use the summary prompt (default or custom)
+         c. Save the generated summary
+    prompt: |
+      You are a helpful AI research assistant. Your task is to summarize academic papers clearly and accurately.
 
-  - id: collect_summaries
+      Please provide a comprehensive summary of this academic paper, focusing on:
+      - Main findings
+      - Methodology
+      - Conclusions
+      - Relevant statistics or data for meta-analysis
+
+      {{summary_prompt}}
+
+  - id: "collect_summaries"
     name: "Collect Summaries"
     tool:
-      id: google_docs
-      name: "Google Docs"
-      description: "Google's collaborative document editing platform"
-      iconUrl: "./tools/google_docs/icon.webp"
+      name: "google_docs"
       settings:
         enable_markdown: true
-    input: "Create a new Google Doc titled Research Summaries - [Date]. Add all PDF summaries with clear section headers"
-    output: "A Google Doc containing all summaries in an organized format"
-    prompt: null
+    description: "Organize paper summaries in a Google Doc"
+    tool_usage: |
+      1. Create a new Google Doc titled "Research Summaries - [Date]"
+      2. Add all PDF summaries with clear section headers
+      3. Format for readability
+    prompt: |
+      Create a new Google Doc with the following structure:
 
-  - id: generate_answer
+      # Research Summaries
+      Date: [Current Date]
+      Research Question: {{research_question}}
+      
+      Files Analyzed: {{pdf_files}}
+
+      ## Paper Summaries
+      [Add summaries here with clear headers]
+
+  - id: "generate_answer"
     name: "Generate Answer"
     tool:
-      id: chatgpt
-      name: "ChatGPT"
-      description: "OpenAI's GPT models for conversational AI and text generation"
-      iconUrl: "./tools/chatgpt/icon.svg"
+      name: "chatgpt"
+      model: "GPT-4"
       settings:
         enable_web_search: false
-    model: "o1-preview"
-    input: "Using P1 model - Research Question - [research_question]. Based on the following paper summaries, please provide a comprehensive answer - [Paste summaries from Google Doc]"
-    output: "A comprehensive answer to the research question"
-    prompt: null
+    description: "Generate comprehensive answer to research question"
+    tool_usage: |
+      1. Upload the Google Doc with summaries
+      2. Use the analysis prompt to generate answer
+      3. Review and refine the response
+    prompt: |
+      You are a research assistant helping with a literature review. Based on the following paper summaries, please provide a comprehensive answer to this research question:
+
+      Question: {{research_question}}
+
+      [Paper summaries will be provided here]
+
+      Please structure your answer with:
+      1. Executive Summary
+      2. Key Findings from Literature
+      3. Synthesis and Analysis
+      4. Gaps and Future Research
+      5. Conclusion
 
 tips:
   - "Use consistent section headers in Google Docs to make the summaries easy to navigate"
@@ -68,8 +101,9 @@ tips:
   - "Make sure to include page numbers or section references in the summaries for easy verification"
 
 examples:
-  - name: "Literature Review"
-    description: "Using the workflow to conduct a literature review on machine learning applications in healthcare"
-    parameters:
+  - parameters:
       research_question: "What are the main applications and challenges of deep learning in medical imaging?"
-    workflow_example: "1. Summarize 10 recent papers on deep learning in medical imaging. 2. Organize summaries in Google Docs with sections for different imaging modalities. 3. Generate a comprehensive answer focusing on key applications and technical challenges"
+      pdf_files: "paper1.pdf, paper2.pdf, paper3.pdf"
+    sample_queries:
+      - "Summarize the methodology and findings from the papers regarding deep learning applications in medical imaging"
+      - "What are the common challenges and limitations identified across the papers?"

@@ -11,50 +11,19 @@ tags:
 parameters:
   - name: target_market
     description: "The specific market to analyze"
-    required: true
     example: "US smart home security market"
   
   - name: time_horizon
     description: "Future time period for projections"
-    required: false
     default: "3 years"
     example: "2024-2027"
-
-tools:
-  claude:
-    used_for:
-      - "Query generation"
-      - "Research framework development"
-    settings:
-      model: "Claude 3.5 Sonnet"
-
-  perplexity:
-    used_for:
-      - "Market research execution"
-      - "Data gathering"
-    settings:
-      focus: "Web"
-      enable_pro: true
-  
-  chatgpt:
-    used_for:
-      - "Data synthesis"
-      - "Report generation"
-    settings:
-      model: "GPT-4o"
-      enable_web_search: false
-  
-  google_docs:
-    used_for:
-      - "Research documentation"
-      - "Report organization"
-    settings:
-      enable_markdown: true
 
 workflow:
   - id: "query_generation"
     name: "Research Query Generation"
-    tool: "claude"
+    tool:
+      name: "claude"
+      model: "Claude 3.5 Sonnet"
     description: "Generate comprehensive research queries using Claude's analytical capabilities"
     tool_usage: |
       1. Create a new conversation with Claude
@@ -67,10 +36,12 @@ workflow:
       {{target_market}}
       </target_market>
 
+      Time Horizon for Analysis: {{time_horizon}}
+
       **Task Requirements:**
       - **Self-Contained:** Each query must include all necessary context to stand alone.
       - **Different Aspects:** Focus on a different aspect of market analysis for each query (e.g., market size, trends, segments, competitors, consumer behavior).
-      - **Current Year Data:** Target data from current year.
+      - **Current Year Data:** Target data from current year with projections through {{time_horizon}}.
 
       **Instructions:**
       - **Generate 5 Search Queries:** No need to include the planning process; focus on producing the final queries.
@@ -83,7 +54,10 @@ workflow:
 
   - id: "setup_document"
     name: "Research Document Setup"
-    tool: "google_docs"
+    tool:
+      name: "google_docs"
+      settings:
+        enable_markdown: true
     description: "Create and format Google Doc for research documentation"
     tool_usage: |
       1. Create new Google Doc
@@ -98,7 +72,11 @@ workflow:
 
   - id: "research_execution"
     name: "Research Data Collection"
-    tool: "perplexity"
+    tool:
+      name: "perplexity"
+      settings:
+        focus: "Academic"
+        enable_pro: true
     description: "Execute research queries and document findings"
     input_source: "queries from query_generation step"
     tool_usage: |
@@ -114,7 +92,11 @@ workflow:
 
   - id: "synthesis_analysis"
     name: "Report Generation"
-    tool: "chatgpt"
+    tool:
+      name: "chatgpt"
+      model: "GPT-4"
+      settings:
+        enable_web_search: false
     description: "Synthesize research findings into comprehensive market analysis"
     input_source: "PDF from research_execution step"
     tool_usage: |

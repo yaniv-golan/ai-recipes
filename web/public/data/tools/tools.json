@@ -1,0 +1,26 @@
+{
+    "chatgpt": {
+        "id": "chatgpt",
+        "name": "ChatGPT",
+        "description": "OpenAI's GPT models for conversational AI and text generation",
+        "icon": "/ai-recipes/data/tools/chatgpt/icon.svg"
+    },
+    "claude": {
+        "id": "claude",
+        "name": "Claude",
+        "description": "Anthropic's Claude AI model for text analysis and generation",
+        "icon": "/ai-recipes/data/tools/claude/icon.svg"
+    },
+    "google_docs": {
+        "id": "google_docs",
+        "name": "Google Docs",
+        "description": "Google's collaborative document editing platform",
+        "icon": "/ai-recipes/data/tools/google_docs/icon.webp"
+    },
+    "perplexity": {
+        "id": "perplexity",
+        "name": "Perplexity AI",
+        "description": "AI-powered search engine with multiple models and focus modes",
+        "icon": "/ai-recipes/data/tools/perplexity/icon.svg"
+    }
+}

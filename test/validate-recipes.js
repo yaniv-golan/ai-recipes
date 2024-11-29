@@ -4,65 +4,178 @@ const Ajv = require('ajv');
 const yaml = require('js-yaml');
 
 const recipeSchema = require('../schema/recipe-schema.json');
-const baseToolSchema = require('../schema/tool-schema.json');
-
-// Update paths to tool schemas
-const toolSchemas = {
-    'claude.yaml': require('../schema/tools/claude.json'),
-    'chatgpt.yaml': require('../schema/tools/chatgpt.json'),
-    'perplexity.yaml': require('../schema/tools/perplexity.json'),
-    'google_docs.yaml': require('../schema/tools/google-docs.json')
+const toolIdentitySchema = {
+    type: "object",
+    required: ["id", "name", "description", "icon"],
+    properties: {
+        id: {
+            type: "string",
+            pattern: "^[a-z][a-z0-9_-]*$"
+        },
+        name: {
+            type: "string"
+        },
+        description: {
+            type: "string"
+        },
+        icon: {
+            type: "string",
+            pattern: "^icon\\.(svg|webp)$",
+            description: "Must be either icon.svg or icon.webp"
+        }
+    },
+    additionalProperties: false
 };
 
 function validateTools() {
     const ajv = new Ajv();
+    const validateToolIdentity = ajv.compile(toolIdentitySchema);
     const toolsDir = path.join(__dirname, '..', 'tools');
-    const toolFiles = fs.readdirSync(toolsDir);
+    const toolDirs = fs.readdirSync(toolsDir).filter(f =>
+        fs.statSync(path.join(toolsDir, f)).isDirectory()
+    );
 
-    toolFiles.forEach((file) => {
-        if (file.endsWith('.yaml')) {
-            // First validate against base schema
-            const baseValidate = ajv.compile(baseToolSchema);
-            const toolPath = path.join(toolsDir, file);
-            const toolYaml = fs.readFileSync(toolPath, 'utf8');
-            const tool = yaml.safeLoad(toolYaml);
+    let hasErrors = false;
+    toolDirs.forEach((dir) => {
+        const toolYamlPath = path.join(toolsDir, dir, 'tool.yaml');
+        if (fs.existsSync(toolYamlPath)) {
+            const toolYaml = fs.readFileSync(toolYamlPath, 'utf8');
+            const tool = yaml.load(toolYaml);
 
-            const baseValid = baseValidate(tool);
-            if (!baseValid) {
-                console.error(
-                    `Base schema validation errors in ${file}:`,
-                    baseValidate.errors
-                );
-                return;
-            }
-
-            // Then validate against specific schema
-            const schema = toolSchemas[file];
-            if (!schema) {
-                console.error(`No schema found for tool file: ${file}`);
-                return;
-            }
-
-            const validate = ajv.compile(schema);
-            const valid = validate(tool);
+            // Schema validation
+            const valid = validateToolIdentity(tool);
             if (!valid) {
                 console.error(
-                    `Tool-specific validation errors in ${file}:`,
-                    validate.errors
+                    `Tool identity validation errors in ${toolYamlPath}:`,
+                    validateToolIdentity.errors
                 );
+                hasErrors = true;
             } else {
-                console.log(`${file} is valid.`);
+                // Verify icon file exists
+                const iconPath = path.join(toolsDir, dir, tool.icon);
+                if (!fs.existsSync(iconPath)) {
+                    console.error(`Icon file not found for ${dir}: ${tool.icon}`);
+                    hasErrors = true;
+                } else {
+                    console.log(`${toolYamlPath} validation passed.`);
+                }
             }
         }
     });
+    return !hasErrors;
+}
+
+function extractParameterRefs(text) {
+    if (!text) return new Set();
+    const pattern = /\{\{([a-zA-Z][a-zA-Z0-9_]*)\}\}/g;
+    const matches = [...text.matchAll(pattern)];
+    return new Set(matches.map(m => m[1]));
+}
+
+function validateParameterUsage(recipe, recipePath) {
+    const errors = [];
+
+    // Get defined parameters
+    const definedParams = new Set(recipe.parameters.map(p => p.name));
+
+    // Find all parameter references in workflow prompts
+    const usedParams = new Set();
+    recipe.workflow.forEach(step => {
+        if (step.prompt) {
+            const refs = extractParameterRefs(step.prompt);
+            refs.forEach(ref => usedParams.add(ref));
+
+            // Check if all referenced parameters are defined
+            for (const ref of refs) {
+                if (!definedParams.has(ref)) {
+                    errors.push(`Step '${step.id}' references undefined parameter: ${ref}`);
+                }
+            }
+        }
+    });
+
+    // Check if all defined parameters are used
+    for (const param of definedParams) {
+        if (!usedParams.has(param)) {
+            errors.push(`Defined parameter '${param}' is never used`);
+        }
+    }
+
+    if (errors.length > 0) {
+        console.error(`\nParameter validation errors in ${recipePath}:`);
+        errors.forEach(error => console.error(`  - ${error}`));
+        return false;
+    }
+    return true;
+}
+
+async function validateRecipe(recipePath) {
+    const ajv = new Ajv();
+    const validate = ajv.compile(recipeSchema);
+    const toolsDir = path.join(__dirname, '..', 'tools');
+
+    const recipeFile = path.join(recipePath, 'recipe.yaml');
+    if (fs.existsSync(recipeFile)) {
+        const recipeYaml = fs.readFileSync(recipeFile, 'utf8');
+        const recipe = yaml.load(recipeYaml);
+
+        // Schema validation
+        const valid = validate(recipe);
+        if (!valid) {
+            console.error(
+                `Schema validation errors in ${recipeFile}:`,
+                validate.errors
+            );
+            return false;
+        }
+
+        console.log(`${recipeFile} schema validation passed.`);
+
+        // Validate tools exist
+        for (const step of recipe.workflow) {
+            const toolId = step.tool.name;
+            const toolDir = path.join(toolsDir, toolId);
+            const toolYamlPath = path.join(toolDir, 'tool.yaml');
+
+            if (!fs.existsSync(toolDir)) {
+                console.error(`Tool directory not found for ${toolId}`);
+                return false;
+            }
+
+            if (!fs.existsSync(toolYamlPath)) {
+                console.error(`Tool configuration not found: ${toolYamlPath}`);
+                return false;
+            }
+
+            try {
+                const toolConfig = yaml.load(fs.readFileSync(toolYamlPath, 'utf8'));
+                const iconPath = path.join(toolDir, toolConfig.icon);
+
+                if (!fs.existsSync(iconPath)) {
+                    console.error(`Tool ${toolId} icon file ${toolConfig.icon} not found`);
+                    return false;
+                }
+            } catch (err) {
+                console.error(`Failed to validate tool ${toolId}: ${err.message}`);
+                return false;
+            }
+        }
+
+        // Parameter usage validation
+        if (!validateParameterUsage(recipe, recipePath)) {
+            return false;
+        }
+
+        console.log(`${recipeFile} parameter validation passed.`);
+        return true;
+    }
+    return false;
 }
 
 function validateRecipes() {
-    const ajv = new Ajv();
-    const validate = ajv.compile(recipeSchema);
-
     const recipesDir = path.join(__dirname, '..', 'recipes');
     const recipeFiles = fs.readdirSync(recipesDir);
+    let hasErrors = false;
 
     recipeFiles.forEach((authorDir) => {
         const authorPath = path.join(recipesDir, authorDir);
@@ -73,25 +186,43 @@ function validateRecipes() {
                 const recipeFile = path.join(recipePath, 'recipe.yaml');
                 if (fs.existsSync(recipeFile)) {
                     const recipeYaml = fs.readFileSync(recipeFile, 'utf8');
-                    const recipe = yaml.safeLoad(recipeYaml);
+                    const recipe = yaml.load(recipeYaml);
+
+                    // Schema validation
                     const valid = validate(recipe);
                     if (!valid) {
                         console.error(
-                            `Validation errors in ${recipeFile}:`,
+                            `Schema validation errors in ${recipeFile}:`,
                             validate.errors
                         );
+                        hasErrors = true;
                     } else {
-                        console.log(`${recipeFile} is valid.`);
+                        console.log(`${recipeFile} schema validation passed.`);
+
+                        // Parameter usage validation
+                        if (!validateParameterUsage(recipe, recipeFile)) {
+                            hasErrors = true;
+                        } else {
+                            console.log(`${recipeFile} parameter validation passed.`);
+                        }
                     }
                 }
             });
         }
     });
+
+    if (hasErrors) {
+        process.exit(1);
+    }
 }
 
 // Run validations
 console.log('Validating tools...');
-validateTools();
+const toolsValid = validateTools();
 
 console.log('\nValidating recipes...');
-validateRecipes(); 
+const recipesValid = validateRecipes();
+
+if (!toolsValid || !recipesValid) {
+    process.exit(1);
+} 

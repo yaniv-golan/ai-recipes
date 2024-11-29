@@ -4,11 +4,12 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "prebuild": "node scripts/process-recipes.js",
+    "predev": "node scripts/process-recipes.js",
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "process-recipes": "node scripts/process-recipes.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
@@ -25,10 +26,12 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.28.0",
+    "sirv": "^3.0.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@rollup/plugin-yaml": "^4.1.2",
     "@types/dompurify": "^3.2.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.17.9",

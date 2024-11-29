@@ -7,52 +7,45 @@
         },
         {
             "type": "object",
-            "required": [
-                "default_model",
-                "models"
-            ],
             "properties": {
-                "default_model": {
+                "tool_usage": {
+                    "type": "string",
+                    "description": "How the tool should be used in this step"
+                },
+                "prompt": {
+                    "type": "string",
+                    "description": "The prompt to send to ChatGPT"
+                },
+                "model": {
                     "type": "string",
                     "enum": [
                         "GPT-4o",
-                        "o1-preview"
-                    ]
+                        "GPT-4o with canvas (beta)",
+                        "o1-preview",
+                        "o1-mini",
+                        "GPT-4o-mini",
+                        "GPT-4"
+                    ],
+                    "description": "Model to use for this workflow step"
                 },
-                "models": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "name",
-                            "settings"
-                        ],
-                        "properties": {
-                            "name": {
-                                "type": "string",
-                                "enum": [
-                                    "GPT-4o",
-                                    "o1-preview"
-                                ]
-                            },
-                            "settings": {
-                                "type": "object",
-                                "required": [
-                                    "enable_web_search"
-                                ],
-                                "properties": {
-                                    "enable_web_search": {
-                                        "type": "boolean"
-                                    }
-                                },
-                                "additionalProperties": false
-                            }
-                        },
-                        "additionalProperties": false
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "enable_web_search": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable web search capabilities. true=required, false=disabled, null=doesn't matter"
+                        }
                     },
-                    "minItems": 1
+                    "additionalProperties": false
                 }
             },
+            "required": [
+                "tool_usage",
+                "prompt"
+            ],
             "additionalProperties": false
         }
     ]

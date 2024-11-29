@@ -12,7 +12,7 @@ While individual AI tools like ChatGPT, Claude, and Perplexity are powerful on t
 
 ## Finding and using AI Recipes
 
-If you're comfortable using GitHub and reading the recipes in YAML or README files, great. Keep going. 
+If you're comfortable using GitHub and reading the recipes in YAML or README files, great. Keep going.
 
 For mere mortals though, a more accessible version of this repostiory is available [https://yaniv-golan.github.io/ai-recipes/](https://yaniv-golan.github.io/ai-recipes/).
 
@@ -70,11 +70,13 @@ These files are **automatically generated**:
 1. Fork the repository.
 2. Create a new branch.
 3. **Validate your recipe:**
+
    ```bash
    python .github/scripts/validate_yaml.py
    python .github/scripts/validate_schema.py schema/recipe-schema.json recipes/
    python .github/scripts/check_files.py
    ```
+
 4. Add your recipe, following the structure above.
 5. Fill in the pull request template.
 6. Submit a pull request.

@@ -1,0 +1,27 @@
+name: Sync Tool Configurations
+
+on:
+  push:
+    paths:
+      - 'tools/**'
+  workflow_dispatch:
+
+jobs:
+  sync-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create target directory
+        run: mkdir -p web/public/data/tools
+        
+      - name: Copy tool configurations
+        run: cp -r tools/* web/public/data/tools/
+        
+      - name: Commit changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add web/public/data/tools
+          git commit -m "Sync tool configurations" || echo "No changes to commit"
+          git push 

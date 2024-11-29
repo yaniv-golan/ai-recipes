@@ -1,32 +1,7 @@
 import React, { useState } from 'react';
-import { ToolSettings } from './ToolsForm';
-
-type WorkflowStep = {
-    id: string;
-    name: string;
-    tool: {
-        type: keyof ToolSettings;
-        settings: {
-            model?: 'GPT-4o' | 'GPT-4o with canvas' | 'o1-preview' | 'o1-mini';
-            enable_web_search?: boolean;
-            custom_gpt?: {
-                name: string;
-                url: string;
-            } | null;
-            focus?: 'Web' | 'Academic' | 'Math' | 'Writing' | 'Video' | 'Social';
-            enable_pro?: boolean;
-            enable_markdown?: boolean;
-            enable_artifacts?: boolean;
-            enable_analysis_tool?: boolean;
-        };
-        used_for: string[];
-    };
-    description: string;
-    tool_usage: string;
-    prompt: string;
-    output_handling: string;
-    notes: string;
-};
+import { WorkflowStep, Tool } from '../types/workflow';
+import { ToolsForm } from './ToolsForm';
+import { TOOL_CONFIGS, ToolConfig } from '../utils/tools';
 
 type WorkflowStepsFormProps = {
     steps: WorkflowStep[];
@@ -41,19 +16,16 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
             id: `step-${Date.now()}`,
             name: '',
             tool: {
-                type: 'chatgpt',
-                settings: {
-                    model: 'GPT-4o',
-                    enable_web_search: false,
-                    custom_gpt: null,
-                },
-                used_for: [],
+                id: '',
+                name: '',
+                model: '',
+                settings: {}
             },
             description: '',
             tool_usage: '',
             prompt: '',
             output_handling: '',
-            notes: '',
+            notes: ''
         };
         onChange([...steps, newStep]);
     };
@@ -61,100 +33,18 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
     const updateStep = (index: number, field: keyof WorkflowStep, value: any) => {
         const updatedSteps = steps.map((step, i) => {
             if (i === index) {
-                if (field === 'tool') {
-                    // Reset tool settings when tool type changes
-                    const newToolType = value as keyof ToolSettings;
-                    let newSettings = {};
-                    switch (newToolType) {
-                        case 'chatgpt':
-                            newSettings = {
-                                model: 'GPT-4o',
-                                enable_web_search: false,
-                                custom_gpt: null,
-                            };
-                            break;
-                        case 'claude':
-                            newSettings = {
-                                model: 'Claude 3.5 Sonnet',
-                                enable_artifacts: false,
-                                enable_analysis_tool: false,
-                            };
-                            break;
-                        case 'perplexity':
-                            newSettings = {
-                                focus: 'Web',
-                                enable_pro: false,
-                            };
-                            break;
-                        case 'google_docs':
-                            newSettings = {
-                                enable_markdown: true,
-                            };
-                            break;
+                if (field === 'tool' && 'name' in value) {
+                    // When tool is selected, initialize it with the config
+                    const toolConfig = TOOL_CONFIGS[value.name];
+                    if (toolConfig) {
+                        value = {
+                            ...value,
+                            id: toolConfig.id,
+                            description: toolConfig.description
+                        };
                     }
-                    return {
-                        ...step,
-                        tool: {
-                            type: newToolType,
-                            settings: newSettings,
-                            used_for: [],
-                        },
-                    };
                 }
                 return { ...step, [field]: value };
-            }
-            return step;
-        });
-        onChange(updatedSteps);
-    };
-
-    const updateToolSettings = (stepIndex: number, setting: string, value: any) => {
-        const updatedSteps = steps.map((step, i) => {
-            if (i === stepIndex) {
-                return {
-                    ...step,
-                    tool: {
-                        ...step.tool,
-                        settings: {
-                            ...step.tool.settings,
-                            [setting]: value,
-                        },
-                    },
-                };
-            }
-            return step;
-        });
-        onChange(updatedSteps);
-    };
-
-    const addToolUsage = (stepIndex: number, usage: string) => {
-        if (usage.trim()) {
-            const updatedSteps = steps.map((step, i) => {
-                if (i === stepIndex) {
-                    return {
-                        ...step,
-                        tool: {
-                            ...step.tool,
-                            used_for: [...step.tool.used_for, usage.trim()],
-                        },
-                    };
-                }
-                return step;
-            });
-            onChange(updatedSteps);
-        }
-    };
-
-    const removeToolUsage = (stepIndex: number, usageIndex: number) => {
-        const updatedSteps = steps.map((step, i) => {
-            if (i === stepIndex) {
-                return {
-                    ...step,
-                    tool: {
-                        ...step.tool,
-                        used_for: step.tool.used_for.filter((_, i) => i !== usageIndex),
-                    },
-                };
             }
             return step;
         });
@@ -220,15 +110,20 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                 <div>
                                     <div className="flex items-center justify-between">
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Step Name (Optional)
+                                            Step Name
+                                            <span className="text-red-600 ml-1">*</span>
                                         </label>
+                                        {!step.name.trim() && (
+                                            <span className="text-sm text-red-600">Required</span>
+                                        )}
                                     </div>
                                     <input
                                         type="text"
                                         value={step.name}
                                         onChange={(e) => updateStep(index, 'name', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.name.trim() ? 'border-red-300' : 'border-gray-300'}`}
                                         placeholder="Name this step"
+                                        required
                                     />
                                 </div>
 
@@ -236,274 +131,127 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                     <div className="flex items-center justify-between">
                                         <label className="block text-sm font-medium text-gray-700">
                                             Tool
+                                            <span className="text-red-600 ml-1">*</span>
                                         </label>
+                                        {!step.tool.name && (
+                                            <span className="text-sm text-red-600">Required</span>
+                                        )}
                                     </div>
                                     <select
-                                        value={step.tool.type}
-                                        onChange={(e) => updateStep(index, 'tool', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                        value={step.tool.id}
+                                        onChange={(e) => {
+                                            const toolId = e.target.value;
+                                            const toolConfig = TOOL_CONFIGS[toolId];
+                                            updateStep(index, 'tool', {
+                                                id: toolId,
+                                                name: toolConfig?.name || '',
+                                                model: '',
+                                                settings: {}
+                                            });
+                                        }}
+                                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.tool.id ? 'border-red-300' : 'border-gray-300'}`}
+                                        required
                                     >
-                                        <option value="chatgpt">ChatGPT</option>
-                                        <option value="claude">Claude</option>
-                                        <option value="perplexity">Perplexity</option>
-                                        <option value="google_docs">Google Docs</option>
+                                        <option value="">Select a tool</option>
+                                        {Object.keys(TOOL_CONFIGS).map(id => (
+                                            <option key={id} value={id}>
+                                                {TOOL_CONFIGS[id].name}
+                                            </option>
+                                        ))}
                                     </select>
-                                </div>
-
-                                {/* Tool-specific settings */}
-                                <div className="col-span-2 space-y-4">
-                                    {step.tool.type === 'chatgpt' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Model</label>
-                                                <select
-                                                    value={step.tool.settings.model}
-                                                    onChange={(e) => updateToolSettings(index, 'model', e.target.value)}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                                >
-                                                    <option value="GPT-4o">GPT-4o</option>
-                                                    <option value="GPT-4o with canvas">GPT-4o with canvas</option>
-                                                    <option value="o1-preview">o1-preview</option>
-                                                    <option value="o1-mini">o1-mini</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={step.tool.settings.enable_web_search}
-                                                    onChange={(e) =>
-                                                        updateToolSettings(index, 'enable_web_search', e.target.checked)
-                                                    }
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <label className="ml-2 block text-sm text-gray-700">
-                                                    Enable web search
-                                                </label>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">
-                                                    Custom GPT (optional)
-                                                </label>
-                                                <div className="mt-1 space-y-2">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Custom GPT Name"
-                                                        value={step.tool.settings.custom_gpt?.name || ''}
-                                                        onChange={(e) =>
-                                                            updateToolSettings(index, 'custom_gpt', {
-                                                                ...(step.tool.settings.custom_gpt || {}),
-                                                                name: e.target.value,
-                                                            })
-                                                        }
-                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                                    />
-                                                    <input
-                                                        type="url"
-                                                        placeholder="Custom GPT URL"
-                                                        value={step.tool.settings.custom_gpt?.url || ''}
-                                                        onChange={(e) =>
-                                                            updateToolSettings(index, 'custom_gpt', {
-                                                                ...(step.tool.settings.custom_gpt || {}),
-                                                                url: e.target.value,
-                                                            })
-                                                        }
-                                                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {step.tool.type === 'claude' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Model</label>
-                                                <select
-                                                    value={step.tool.settings.model}
-                                                    onChange={(e) => updateToolSettings(index, 'model', e.target.value)}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                                >
-                                                    <option value="Claude 3.5 Sonnet">Claude 3.5 Sonnet</option>
-                                                    <option value="Claude 3 Opus">Claude 3 Opus</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={step.tool.settings.enable_artifacts}
-                                                    onChange={(e) =>
-                                                        updateToolSettings(index, 'enable_artifacts', e.target.checked)
-                                                    }
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <label className="ml-2 block text-sm text-gray-700">
-                                                    Enable artifacts
-                                                </label>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={step.tool.settings.enable_analysis_tool}
-                                                    onChange={(e) =>
-                                                        updateToolSettings(index, 'enable_analysis_tool', e.target.checked)
-                                                    }
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <label className="ml-2 block text-sm text-gray-700">
-                                                    Enable analysis tool
-                                                </label>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {step.tool.type === 'perplexity' && (
-                                        <>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700">Focus</label>
-                                                <select
-                                                    value={step.tool.settings.focus}
-                                                    onChange={(e) => updateToolSettings(index, 'focus', e.target.value)}
-                                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                                >
-                                                    <option value="Web">Web</option>
-                                                    <option value="Academic">Academic</option>
-                                                    <option value="Math">Math</option>
-                                                    <option value="Writing">Writing</option>
-                                                    <option value="Video">Video</option>
-                                                    <option value="Social">Social</option>
-                                                </select>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={step.tool.settings.enable_pro}
-                                                    onChange={(e) =>
-                                                        updateToolSettings(index, 'enable_pro', e.target.checked)
-                                                    }
-                                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <label className="ml-2 block text-sm text-gray-700">
-                                                    Enable Pro features
-                                                </label>
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {step.tool.type === 'google_docs' && (
-                                        <div className="flex items-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={step.tool.settings.enable_markdown}
-                                                onChange={(e) =>
-                                                    updateToolSettings(index, 'enable_markdown', e.target.checked)
-                                                }
-                                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <label className="ml-2 block text-sm text-gray-700">
-                                                Enable Markdown support
-                                            </label>
-                                        </div>
-                                    )}
-
-                                    {/* Tool Usage */}
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Tool Usage
-                                            </label>
-                                            {!step.tool_usage.trim() && (
-                                                <span className="text-sm text-red-600">* Required</span>
-                                            )}
-                                        </div>
-                                        <textarea
-                                            value={step.tool_usage}
-                                            onChange={(e) => updateStep(index, 'tool_usage', e.target.value)}
-                                            rows={3}
-                                            className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.tool_usage.trim() ? 'border-red-300' : 'border-gray-300'
-                                                }`}
-                                            placeholder="Describe how to use the tool in this step"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Description (Optional)
-                                        </label>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={step.description}
-                                        onChange={(e) => updateStep(index, 'description', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        placeholder="Describe what this step does"
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Prompt Template (Optional)
-                                        </label>
-                                    </div>
-                                    <textarea
-                                        value={step.prompt}
-                                        onChange={(e) => updateStep(index, 'prompt', e.target.value)}
-                                        rows={5}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm font-mono"
-                                        placeholder="Enter the prompt template for this step"
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Output Handling (Optional)
-                                        </label>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={step.output_handling}
-                                        onChange={(e) => updateStep(index, 'output_handling', e.target.value)}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        placeholder="How should the output be handled?"
-                                    />
-                                </div>
-
-                                <div className="col-span-2">
-                                    <div className="flex items-center justify-between">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Notes (Optional)
-                                        </label>
-                                    </div>
-                                    <textarea
-                                        value={step.notes}
-                                        onChange={(e) => updateStep(index, 'notes', e.target.value)}
-                                        rows={2}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        placeholder="Additional notes or tips for this step"
-                                    />
                                 </div>
                             </div>
 
-                            <div className="mt-2 text-sm text-gray-500">
-                                Drag to reorder • Step {index + 1}
+                            {step.tool.name && (
+                                <div className="mt-4">
+                                    <ToolsForm
+                                        tool={step.tool}
+                                        onChange={(tool) => updateStep(index, 'tool', tool)}
+                                    />
+                                </div>
+                            )}
+
+                            <div className="mt-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Description
+                                        <span className="text-red-600 ml-1">*</span>
+                                    </label>
+                                    {!step.description.trim() && (
+                                        <span className="text-sm text-red-600">Required</span>
+                                    )}
+                                </div>
+                                <textarea
+                                    value={step.description}
+                                    onChange={(e) => updateStep(index, 'description', e.target.value)}
+                                    rows={2}
+                                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.description.trim() ? 'border-red-300' : 'border-gray-300'}`}
+                                    placeholder="Describe what this step does"
+                                    required
+                                />
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Tool Usage
+                                </label>
+                                <textarea
+                                    value={step.tool_usage}
+                                    onChange={(e) => updateStep(index, 'tool_usage', e.target.value)}
+                                    rows={2}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                    placeholder="Describe how the tool should be used (optional)"
+                                />
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Prompt
+                                </label>
+                                <textarea
+                                    value={step.prompt}
+                                    onChange={(e) => updateStep(index, 'prompt', e.target.value)}
+                                    rows={3}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                    placeholder="Enter the prompt for this step (optional)"
+                                />
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Output Handling
+                                </label>
+                                <textarea
+                                    value={step.output_handling}
+                                    onChange={(e) => updateStep(index, 'output_handling', e.target.value)}
+                                    rows={2}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                    placeholder="Describe how to handle the output (optional)"
+                                />
+                            </div>
+
+                            <div className="mt-4">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Notes
+                                </label>
+                                <textarea
+                                    value={step.notes}
+                                    onChange={(e) => updateStep(index, 'notes', e.target.value)}
+                                    rows={2}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                    placeholder="Additional notes about this step (optional)"
+                                />
                             </div>
                         </div>
                     ))}
 
-                    {/* Add Step button at the end */}
-                    <div className="flex justify-center pt-4">
-                        <button
-                            type="button"
-                            onClick={addStep}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                        >
-                            Add Next Step
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={addStep}
+                        className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                        Add Step
+                    </button>
                 </div>
             )}
         </div>

@@ -6,6 +6,7 @@ import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import * as Icons from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import { TOOL_CONFIGS } from '../utils/tools';
 
 interface Parameter {
     name: string;
@@ -27,10 +28,8 @@ interface RecipeData {
         id: string;
         name: string;
         tool: {
-            id: string;
             name: string;
             description: string;
-            iconUrl: string;
             settings: Record<string, any>;
         };
         description: string;
@@ -53,17 +52,21 @@ function highlightParameters(text: string, parameters: Record<string, string>) {
 /**
  * Component for displaying tool icons with fallback handling
  * @param {object} props - Component props
- * @param {string} props.url - URL to the tool's icon from process-recipes.js
+ * @param {string} props.toolId - Tool ID to locate the icon
  * @param {string} props.name - Tool name for alt text
  * @param {string} props.className - Optional CSS classes
  * @returns {JSX.Element} Image element with fallback handling
  */
-function ToolIcon({ url, name, className = "w-4 h-4" }: { url: string; name: string; className?: string }) {
+function ToolIcon({ toolId, name, className = "w-4 h-4" }: { toolId: string; name: string; className?: string }) {
     const [error, setError] = useState(false);
+    const toolName = name.toLowerCase();
+    const toolConfig = TOOL_CONFIGS[toolName];
+    const iconPath = toolConfig?.icon || '/ai-recipes/tools/default-icon.svg';
+    const defaultIcon = '/ai-recipes/tools/default-icon.svg';
 
     return (
         <img
-            src={error ? "./tools/default-icon.svg" : url}
+            src={error ? defaultIcon : iconPath}
             alt={`${name} icon`}
             className={`${className} object-contain`}
             onError={() => setError(true)}
@@ -81,6 +84,39 @@ function renderMarkdown(content: string): string {
     return typeof rendered === 'string' ? rendered : '';
 }
 
+// Create a separate component for prompt display
+const PromptDisplay = React.memo(({ prompt, parameters }: { prompt: string; parameters: Record<string, string> }) => {
+    console.log('PromptDisplay received parameters:', parameters);
+
+    // Process each part of the text
+    const parts = prompt.split(/(\{\{[^}]+\}\})/g);
+
+    return (
+        <pre className="bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap text-sm">
+            {parts.map((part, index) => {
+                // Check if this part is a parameter placeholder
+                const match = part.match(/\{\{([^}]+)\}\}/);
+                if (match) {
+                    const paramName = match[1].trim();
+                    const value = parameters[paramName];
+
+                    // Always use yellow highlight for parameters
+                    return (
+                        <span
+                            key={index}
+                            className="bg-yellow-100 px-1 rounded"
+                        >
+                            {value || part}
+                        </span>
+                    );
+                }
+
+                return <span key={index}>{part}</span>;
+            })}
+        </pre>
+    );
+});
+
 export function Recipe() {
     const { user, recipe } = useParams();
     const navigate = useNavigate();
@@ -90,31 +126,60 @@ export function Recipe() {
     const [selectedStep, setSelectedStep] = useState<string | null>(null);
     const [parameterValues, setParameterValues] = useState<Record<string, string>>({});
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+    const [forceUpdate, setForceUpdate] = useState(0);
+
+    // Debug: Log parameter values whenever they change
+    useEffect(() => {
+        console.log('Parameter values changed:', parameterValues);
+    }, [parameterValues]);
+
+    const handleParameterChange = (name: string, value: string) => {
+        console.log('Parameter change:', { name, value });
+        setParameterValues(prev => {
+            const newValues = {
+                ...prev,
+                [name.replace(/^0$/, 'company_name')]: value  // Temporary fix to map "0" to "company_name"
+            };
+            console.log('New parameter values:', newValues);
+            return newValues;
+        });
+    };
 
     useEffect(() => {
-        // Set the first step as selected by default when data loads
         if (data && data.workflow.length > 0 && !selectedStep) {
             setSelectedStep(data.workflow[0].id);
         }
     }, [data]);
 
-    const handleParameterChange = (name: string, value: string) => {
-        setParameterValues(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    const copyToClipboard = async (text: string) => {
+        try {
+            const processedText = text.replace(/\{\{([^}]+)\}\}/g, (match, param) => {
+                return parameterValues[param] || match;
+            });
+            await navigator.clipboard.writeText(processedText);
+            setCopyFeedback("Copied!");
+            setTimeout(() => setCopyFeedback(null), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            setCopyFeedback("Failed to copy");
+            setTimeout(() => setCopyFeedback(null), 2000);
+        }
     };
 
     useEffect(() => {
         const fetchRecipe = async () => {
             try {
+                // Include the base path in the fetch URL
                 const response = await fetch('/ai-recipes/data/recipes.json');
                 if (!response.ok) {
-                    throw new Error('Failed to fetch recipe data');
+                    throw new Error(`Failed to fetch recipe data: ${response.status} ${response.statusText}`);
                 }
 
                 const recipes = await response.json();
+                console.log('Loaded recipes:', recipes);  // Debug log
+
                 const recipeData = recipes.find((r: RecipeData) => r.path === `${user}/${recipe}`);
+                console.log('Found recipe:', recipeData);  // Debug log
 
                 if (!recipeData) {
                     throw new Error('Recipe not found');
@@ -163,21 +228,9 @@ export function Recipe() {
         );
     }
 
-    const currentStep = selectedStep
+    const currentStep = selectedStep && data
         ? data.workflow.find(step => step.id === selectedStep)
-        : data.workflow[0];
-
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            setCopyFeedback("Copied!");
-            setTimeout(() => setCopyFeedback(null), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
-            setCopyFeedback("Failed to copy");
-            setTimeout(() => setCopyFeedback(null), 2000);
-        }
-    };
+        : data?.workflow[0];
 
     return (
         <div className="container mx-auto px-4 py-8 space-y-8">
@@ -219,7 +272,7 @@ export function Recipe() {
                 </CardHeader>
             </Card>
 
-            {Object.keys(data.parameters).length > 0 && (
+            {data?.parameters && Object.keys(data.parameters).length > 0 && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-xl font-semibold">Parameters</CardTitle>
@@ -227,7 +280,7 @@ export function Recipe() {
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {Object.entries(data.parameters).map(([name, param]) => (
-                                <div key={name} className="space-y-2">
+                                <div key={param.name} className="space-y-2">
                                     <label className="block">
                                         <span className="text-sm font-medium text-gray-900">
                                             {param.name}
@@ -237,8 +290,8 @@ export function Recipe() {
                                     </label>
                                     <input
                                         type="text"
-                                        value={parameterValues[name] || param.default || ''}
-                                        onChange={(e) => handleParameterChange(name, e.target.value)}
+                                        value={parameterValues[param.name] || ''}
+                                        onChange={(e) => handleParameterChange(param.name, e.target.value)}
                                         className={`mt-1 block w-full rounded-md shadow-sm sm:text-sm ${param.required
                                             ? 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
                                             : 'border-gray-200 focus:border-blue-400 focus:ring-blue-400'
@@ -282,7 +335,7 @@ export function Recipe() {
                                     <div className="space-y-2">
                                         <div className="font-medium text-gray-900">{index + 1}. {step.name}</div>
                                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <ToolIcon url={step.tool.iconUrl} name={step.tool.name} />
+                                            <ToolIcon toolId={step.tool.name} name={step.tool.name} />
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger>{step.tool.name}</TooltipTrigger>
@@ -324,7 +377,7 @@ export function Recipe() {
                         <div>
                             <h2 className="text-xl font-semibold mb-2">{currentStep.name}</h2>
                             <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <ToolIcon url={currentStep.tool.iconUrl} name={currentStep.tool.name} />
+                                <ToolIcon toolId={currentStep.tool.name} name={currentStep.tool.name} />
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger>Tool: {currentStep.tool.name}</TooltipTrigger>
@@ -357,7 +410,7 @@ export function Recipe() {
                             </div>
                         )}
 
-                        {currentStep.prompt && typeof currentStep.prompt === 'string' && currentStep.prompt.trim() !== '' && (
+                        {currentStep?.prompt && (
                             <div>
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="text-sm font-medium text-gray-900">Prompt Template</h3>
@@ -375,11 +428,10 @@ export function Recipe() {
                                         )}
                                     </button>
                                 </div>
-                                <pre
-                                    className="bg-gray-50 p-4 rounded-lg overflow-x-auto whitespace-pre-wrap text-sm"
-                                    dangerouslySetInnerHTML={{
-                                        __html: highlightParameters(currentStep.prompt, parameterValues)
-                                    }}
+                                <PromptDisplay
+                                    prompt={currentStep.prompt}
+                                    parameters={parameterValues}
+                                    key={JSON.stringify(parameterValues)} // Force re-render when parameters change
                                 />
                             </div>
                         )}

@@ -11,24 +11,22 @@ tags:
 parameters:
   - name: company_name
     description: "Your company name for competitor analysis context"
-    required: true
     example: "SimpliSafe"
   
   - name: target_industry
     description: "The industry to analyze competitors in"
-    required: true
     example: "US smart home security market"
   
   - name: competitors
     description: "List of key competitors to focus on"
-    required: false
     example: "ADT, Ring, Vivint"
 
 workflow:
   - id: "query_generation"
     name: "Competitive Query Generation"
-    tool: "claude"
-    model: "Claude 3.5 Sonnet"
+    tool:
+      name: "claude"
+      model: "Claude 3.5 Sonnet"
     description: "Generate focused competitor analysis queries"
     tool_usage: |
       1. Create a new conversation with Claude
@@ -41,10 +39,14 @@ workflow:
       {{target_industry}}
       </target_industry>
 
+      <competitors>
+      {{competitors}}
+      </competitors>
+
       **Task Requirements:**
       - **Different Competitive Aspects:** Each query should focus on a different aspect of competitor analysis relevant to **{{company_name}}**, such as market share, product offerings, marketing strategies, financial performance, customer feedback, etc.
       - **Current Year Data:** Target data from the **current year**.
-      - **Include Specific Competitor Names:** Where relevant, mention specific competitors, especially those directly competing with **{{company_name}}**.
+      - **Include Specific Competitor Names:** Focus on the competitors listed above, especially those directly competing with **{{company_name}}**.
       - **Self-Contained:** Each query must include all necessary context to stand alone.
 
       **Instructions:**
@@ -58,8 +60,11 @@ workflow:
 
   - id: "setup_document"
     name: "Research Document Setup"
-    tool: "google_docs"
-    description: "Create and format Google Doc for competitor research"
+    tool:
+      name: "google_docs"
+      settings:
+        enable_markdown: true
+    description: "Create and format Google Doc for research documentation"
     tool_usage: |
       1. Create new Google Doc
       2. Set title format: "[Date] - [Industry] - Competitive Analysis"
@@ -72,14 +77,19 @@ workflow:
     notes: "Double-check formatting settings after each query addition"
 
   - id: "research_execution"
-    name: "Competitive Research Collection"
-    tool: "perplexity"
-    description: "Execute competitor research queries and document findings"
+    name: "Research Data Collection"
+    tool:
+      name: "perplexity"
+      model: "Claude 3.5 Sonnet"
+      settings:
+        focus: "Academic"
+        enable_pro: true
+    description: "Execute research queries and document findings"
     input_source: "queries from query_generation step"
     tool_usage: |
       For each research query in the Google Doc:
       1. Copy query text
-      2. Execute in Perplexity 
+      2. Execute in Perplexity
       3. Wait for complete response
       4. Click 'Copy' button in Perplexity response
       5. Return to Google Doc
@@ -89,8 +99,11 @@ workflow:
 
   - id: "competitive_assessment"
     name: "Competitive Analysis Generation"
-    tool: "chatgpt"
-    model: "GPT-4o"
+    tool:
+      name: "chatgpt"
+      model: "GPT-4"
+      settings:
+        enable_web_search: false
     description: "Synthesize research findings into comprehensive competitive assessment"
     input_source: "PDF from research_execution step"
     tool_usage: |

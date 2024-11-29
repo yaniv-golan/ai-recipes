@@ -14,8 +14,7 @@
     "properties": {
         "name": {
             "type": "string",
-            "maxLength": 100,
-            "pattern": "^[a-zA-Z0-9-]+$"
+            "maxLength": 100
         },
         "description": {
             "type": "string",
@@ -46,15 +45,25 @@
                         "type": "string"
                     },
                     "tool": {
-                        "type": "string",
-                        "pattern": "^[a-z][a-z0-9_-]*$",
-                        "description": "Tool ID reference - must be lowercase alphanumeric with hyphens and underscores, starting with a letter"
-                    },
-                    "model": {
-                        "type": "string"
-                    },
-                    "settings": {
-                        "type": "object"
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "pattern": "^[a-z][a-z0-9_-]*$",
+                                "description": "Tool ID reference - must be lowercase alphanumeric with hyphens and underscores, starting with a letter"
+                            },
+                            "model": {
+                                "type": "string",
+                                "description": "Model identifier for AI tools"
+                            },
+                            "settings": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        },
+                        "required": [
+                            "name"
+                        ]
                     },
                     "description": {
                         "type": "string"
@@ -97,66 +106,22 @@
             "type": "object",
             "required": [
                 "name",
-                "description",
-                "required"
+                "description"
             ],
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+                    "description": "Parameter name - must be a valid identifier"
                 },
                 "description": {
                     "type": "string"
-                },
-                "required": {
-                    "type": "boolean"
                 },
                 "default": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Default value to use if parameter is not provided"
                 },
                 "example": {
-                    "type": "string"
-                }
-            },
-            "additionalProperties": false
-        },
-        "workflow_item": {
-            "type": "object",
-            "required": [
-                "id",
-                "name",
-                "tool",
-                "description",
-                "tool_usage"
-            ],
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "tool": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "tool_usage": {
-                    "type": "string"
-                },
-                "prompt": {
-                    "type": "string"
-                },
-                "tool_settings": {
-                    "type": "object"
-                },
-                "input_source": {
-                    "type": "string"
-                },
-                "output_handling": {
-                    "type": "string"
-                },
-                "notes": {
                     "type": "string"
                 }
             },

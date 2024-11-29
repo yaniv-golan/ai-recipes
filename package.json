@@ -1,0 +1,20 @@
+{
+  "name": "ai-recipes",
+  "version": "1.0.0",
+  "description": "This repository contains a collection of AI-powered workflow recipes designed to maximize your productivity by combining the strengths of different AI tools.  These recipes provide structured approaches to common tasks, enabling you to achieve complex goals efficiently.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "js-yaml": "^4.1.0"
+  }
+}
