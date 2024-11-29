@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Claude Tool Schema",
+    "title": "ChatGPT Tool Schema",
     "allOf": [
         {
             "$ref": "../tool-schema.json"
@@ -8,56 +8,45 @@
         {
             "type": "object",
             "properties": {
-                "model": {
-                    "type": "string",
-                    "enum": [
-                        "Claude 3.5 Sonnet (New)",
-                        "Claude 3 Haiku",
-                        "Claude 3 Opus",
-                        "Claude 3.5 Sonnet (June 2024)"
-                    ]
-                },
-                "settings": {
-                    "type": "object",
-                    "properties": {
-                        "enable_artifacts": {
-                            "type": [
-                                "boolean",
-                                "null"
-                            ],
-                            "description": "Enable file upload and download capabilities. true=required, false=disabled, null=doesn't matter"
-                        },
-                        "enable_analysis": {
-                            "type": [
-                                "boolean",
-                                "null"
-                            ],
-                            "description": "Enable Analysis Tool for data analysis and visualization. true=required, false=disabled, null=doesn't matter"
-                        },
-                        "enable_latex": {
-                            "type": [
-                                "boolean",
-                                "null"
-                            ],
-                            "description": "Enable LaTeX rendering for mathematical equations. true=required, false=disabled, null=doesn't matter"
-                        }
-                    },
-                    "additionalProperties": false
-                },
                 "tool_usage": {
                     "type": "string",
                     "description": "How the tool should be used in this step"
                 },
                 "prompt": {
                     "type": "string",
-                    "description": "The prompt to send to Claude"
+                    "description": "The prompt to send to ChatGPT"
+                },
+                "model": {
+                    "type": "string",
+                    "enum": [
+                        "GPT-4o",
+                        "GPT-4o with canvas (beta)",
+                        "o1-preview",
+                        "o1-mini",
+                        "GPT-4o-mini",
+                        "GPT-4"
+                    ],
+                    "description": "Model to use for this workflow step"
+                },
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "enable_web_search": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable web search capabilities."
+                        }
+                    },
+                    "additionalProperties": false
                 }
             },
-            "additionalProperties": false,
             "required": [
                 "tool_usage",
                 "prompt"
-            ]
+            ],
+            "additionalProperties": false
         }
     ]
 }
