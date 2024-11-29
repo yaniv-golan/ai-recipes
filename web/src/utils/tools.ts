@@ -35,10 +35,6 @@ async function loadToolSchemas() {
     const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'] }] }> = {};
 
     try {
-        // Load base schema first
-        const baseSchemaResponse = await fetch('/ai-recipes/data/schemas/tool-schema.json');
-        const baseSchema = await baseSchemaResponse.json();
-
         // Load individual tool schemas
         const toolIds = Object.keys(toolConfigs).map(path => path.split('/').slice(-2)[0]);
 
