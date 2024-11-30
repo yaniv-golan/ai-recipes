@@ -4,22 +4,15 @@ export type Parameter = {
     example: string;
 };
 
-export type ToolSettings = {
-    [key: string]: boolean | null | string;
-    enable_web_search?: boolean | null;
-    focus?: 'Web' | 'Academic' | 'Math' | 'Writing' | 'Video' | 'Social';
-    enable_pro?: boolean | null;
-    enable_markdown?: boolean | null;
-    enable_artifacts?: boolean | null;
-    enable_analysis?: boolean | null;
-    enable_latex?: boolean | null;
-};
+export type ToolSettingValue = boolean | null | string;
+
+export type ToolSettings = Record<string, ToolSettingValue>;
 
 export type Tool = {
     id: string;
     name: string;
     model: string;
-    settings: Partial<ToolSettings>;
+    settings: ToolSettings;
 };
 
 export type WorkflowStep = {

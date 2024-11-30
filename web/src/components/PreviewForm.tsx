@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { generateYaml } from '../utils/yamlGenerator';
-import { Parameter, WorkflowStep, Example } from '../types/workflow';
-import { ToolSettings } from '../components/ToolsForm';
+import { Parameter, WorkflowStep, Example, ToolSettings } from '../types/workflow';
 
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || 'your_client_id';
 const GITHUB_REDIRECT_URI = `${window.location.origin}/github/callback`;

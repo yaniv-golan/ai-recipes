@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WorkflowStep, Tool } from '../types/workflow';
+import { WorkflowStep } from '../types/workflow';
 import { ToolsForm } from './ToolsForm';
 import { TOOL_CONFIGS, ToolConfig } from '../utils/tools';
 

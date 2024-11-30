@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { marked } from 'marked';
-import hljs from 'highlight.js';
 import 'highlight.js/styles/github.css';
 import * as Icons from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
@@ -86,7 +85,6 @@ function renderMarkdown(content: string): string {
 
 // Create a separate component for prompt display
 const PromptDisplay = React.memo(({ prompt, parameters }: { prompt: string; parameters: Record<string, string> }) => {
-    console.log('PromptDisplay received parameters:', parameters);
 
     // Process each part of the text
     const parts = prompt.split(/(\{\{[^}]+\}\})/g);
@@ -126,21 +124,17 @@ export function Recipe() {
     const [selectedStep, setSelectedStep] = useState<string | null>(null);
     const [parameterValues, setParameterValues] = useState<Record<string, string>>({});
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
-    const [forceUpdate, setForceUpdate] = useState(0);
 
     // Debug: Log parameter values whenever they change
     useEffect(() => {
-        console.log('Parameter values changed:', parameterValues);
     }, [parameterValues]);
 
     const handleParameterChange = (name: string, value: string) => {
-        console.log('Parameter change:', { name, value });
         setParameterValues(prev => {
             const newValues = {
                 ...prev,
                 [name.replace(/^0$/, 'company_name')]: value  // Temporary fix to map "0" to "company_name"
             };
-            console.log('New parameter values:', newValues);
             return newValues;
         });
     };
@@ -169,17 +163,13 @@ export function Recipe() {
     useEffect(() => {
         const fetchRecipe = async () => {
             try {
-                // Include the base path in the fetch URL
                 const response = await fetch('/ai-recipes/data/recipes.json');
                 if (!response.ok) {
                     throw new Error(`Failed to fetch recipe data: ${response.status} ${response.statusText}`);
                 }
 
                 const recipes = await response.json();
-                console.log('Loaded recipes:', recipes);  // Debug log
-
                 const recipeData = recipes.find((r: RecipeData) => r.path === `${user}/${recipe}`);
-                console.log('Found recipe:', recipeData);  // Debug log
 
                 if (!recipeData) {
                     throw new Error('Recipe not found');
@@ -238,36 +228,33 @@ export function Recipe() {
                 <CardHeader>
                     <div className="space-y-6">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                {data.name}
-                                <span className="text-sm font-normal text-gray-600">
-                                    by{' '}
-                                    <Link
-                                        to={`/author/${data.author}`}
-                                        className="hover:text-indigo-600 hover:underline"
-                                    >
-                                        {data.author}
-                                    </Link>
-                                </span>
-                            </h1>
-                        </div>
-                        <div
-                            className="prose prose-sm max-w-none text-gray-600"
-                            dangerouslySetInnerHTML={{ __html: renderMarkdown(data.description) }}
-                        />
-                        {data.tags && data.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {data.tags.map(tag => (
-                                    <button
-                                        key={tag}
-                                        onClick={() => navigate('/?tag=' + encodeURIComponent(tag))}
-                                        className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
-                                    >
-                                        {tag}
-                                    </button>
-                                ))}
+                            <div className="text-sm text-gray-600 mb-4">
+                                by{' '}
+                                <Link
+                                    to={`/author/${data.author}`}
+                                    className="hover:text-indigo-600 hover:underline"
+                                >
+                                    {data.author}
+                                </Link>
                             </div>
-                        )}
+                            <div
+                                className="prose prose-sm max-w-none text-gray-600"
+                                dangerouslySetInnerHTML={{ __html: renderMarkdown(data.description) }}
+                            />
+                            {data.tags && data.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    {data.tags.map(tag => (
+                                        <button
+                                            key={tag}
+                                            onClick={() => navigate('/?tag=' + encodeURIComponent(tag))}
+                                            className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
+                                        >
+                                            {tag}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </CardHeader>
             </Card>
@@ -415,7 +402,7 @@ export function Recipe() {
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="text-sm font-medium text-gray-900">Prompt Template</h3>
                                     <button
-                                        onClick={() => copyToClipboard(currentStep.prompt)}
+                                        onClick={() => copyToClipboard(currentStep.prompt ?? '')}
                                         className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 min-w-[70px] justify-end"
                                     >
                                         {copyFeedback ? (

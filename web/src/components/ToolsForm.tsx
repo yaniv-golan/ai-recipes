@@ -1,6 +1,5 @@
-import React from 'react';
 import { Tool, ToolSettings } from '../types/workflow';
-import { TOOL_CONFIGS, ToolConfig } from '../utils/tools';
+import { TOOL_CONFIGS } from '../utils/tools';
 
 type ToolsFormProps = {
     tool: Tool;
@@ -14,7 +13,7 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
         return null;
     }
 
-    const handleSettingAdd = (setting: string) => {
+    const handleSettingAdd = (setting: keyof ToolSettings) => {
         const updatedTool = {
             ...tool,
             settings: {
@@ -47,11 +46,11 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
 
     // Only show settings that are valid for this tool
     const validSettings = Object.entries(tool.settings)
-        .filter(([key]) => key in (toolConfig.availableSettings || {}));
+        .filter(([key]) => key in (toolConfig.availableSettings || {})) as [keyof ToolSettings, boolean | null | string][];
 
     // Get unused settings
     const unusedSettings = Object.entries(toolConfig.availableSettings || {})
-        .filter(([key]) => !(key in tool.settings));
+        .filter(([key]) => !(key in tool.settings)) as [keyof ToolSettings, string][];
 
     return (
         <div className="space-y-8">
@@ -84,12 +83,12 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
                                 <div key={key} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                                     <div className="flex-grow">
                                         <label className="block text-sm font-medium text-gray-700">
-                                            {toolConfig.availableSettings?.[key]}
+                                            {(toolConfig.availableSettings as Record<keyof ToolSettings, string>)?.[key]}
                                         </label>
                                         {key === 'focus' ? (
                                             <select
                                                 value={value as string}
-                                                onChange={(e) => handleSettingChange(key as keyof ToolSettings, e.target.value)}
+                                                onChange={(e) => handleSettingChange(key, e.target.value)}
                                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                             >
                                                 <option value="Web">Web</option>
@@ -104,7 +103,7 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
                                                 value={value === null ? 'null' : value.toString()}
                                                 onChange={(e) => {
                                                     const val = e.target.value === 'null' ? null : e.target.value === 'true';
-                                                    handleSettingChange(key as keyof ToolSettings, val);
+                                                    handleSettingChange(key, val);
                                                 }}
                                                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                                             >
@@ -116,7 +115,7 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => handleSettingRemove(key as keyof ToolSettings)}
+                                        onClick={() => handleSettingRemove(key)}
                                         className="ml-2 text-gray-400 hover:text-gray-600"
                                     >
                                         <span className="sr-only">Remove setting</span>
@@ -135,7 +134,7 @@ export function ToolsForm({ tool, onChange }: ToolsFormProps) {
                         <select
                             onChange={(e) => {
                                 if (e.target.value) {
-                                    handleSettingAdd(e.target.value);
+                                    handleSettingAdd(e.target.value as keyof ToolSettings);
                                     e.target.value = ''; // Reset select
                                 }
                             }}

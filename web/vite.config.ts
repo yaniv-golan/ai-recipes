@@ -13,6 +13,10 @@ export default defineConfig({
   server: {
     fs: {
       allow: ['..']
+    },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-cache'
     }
   }
 })

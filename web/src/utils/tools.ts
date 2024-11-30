@@ -1,4 +1,4 @@
-import { Tool } from '../types/workflow';
+import { ToolSettings } from '../types/workflow';
 
 export type ToolSchema = {
     properties: {
@@ -13,6 +13,7 @@ export type ToolSchema = {
             }>;
         };
     };
+    required?: string[];
 };
 
 export type ToolConfig = {
@@ -21,7 +22,8 @@ export type ToolConfig = {
     description: string;
     icon: string;
     models?: string[];
-    availableSettings?: Record<string, string>;
+    availableSettings?: Record<keyof ToolSettings, string>;
+    requiredFields?: string[];
 };
 
 // Import all tool.yaml files
@@ -32,7 +34,7 @@ const toolConfigs = import.meta.glob<ToolConfig>('../../../tools/*/tool.yaml', {
 
 // Function to load tool schemas
 async function loadToolSchemas() {
-    const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'] }] }> = {};
+    const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] }> = {};
 
     try {
         // Load individual tool schemas
