@@ -1,4 +1,5 @@
 import { ToolSettings } from '../types/workflow';
+import { getToolIconPath, getToolSchemaPath } from './paths';
 
 export type ToolSchema = {
     properties: {
@@ -45,6 +46,22 @@ function isValidSchema(data: unknown): data is { allOf: [any, { properties: Tool
     );
 }
 
+// Initialize tool configs with basic info first
+export const TOOL_CONFIGS = Object.fromEntries(
+    Object.entries(toolConfigs).map(([path, config]) => {
+        const toolId = path.split('/').slice(-2)[0];
+        return [
+            toolId,
+            {
+                ...config,
+                id: toolId,
+                icon: getToolIconPath(toolId, config.icon),
+                availableSettings: {}
+            }
+        ];
+    })
+);
+
 // Function to load tool schemas
 async function loadToolSchemas() {
     const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] }> = {};
@@ -55,7 +72,7 @@ async function loadToolSchemas() {
 
         for (const toolId of toolIds) {
             try {
-                const response = await fetch(`/ai-recipes/data/schemas/${toolId}.json`);
+                const response = await fetch(getToolSchemaPath(toolId));
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -93,22 +110,6 @@ async function loadToolSchemas() {
 
     return schemas;
 }
-
-// Initialize tool configs with basic info first
-export const TOOL_CONFIGS = Object.fromEntries(
-    Object.entries(toolConfigs).map(([path, config]) => {
-        const toolId = path.split('/').slice(-2)[0];
-        return [
-            toolId,
-            {
-                ...config,
-                id: toolId,
-                icon: `/ai-recipes/data/tools/${toolId}/${config.icon}`,
-                availableSettings: {}
-            }
-        ];
-    })
-);
 
 // Load schemas and update tool configs
 loadToolSchemas().then(schemas => {
