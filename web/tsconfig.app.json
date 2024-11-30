@@ -10,7 +10,6 @@
       "DOM.Iterable"
     ],
     "types": [
-      "dompurify",
       "node"
     ],
     "module": "ESNext",
