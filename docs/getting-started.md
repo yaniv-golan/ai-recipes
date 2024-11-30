@@ -94,6 +94,55 @@ Let's create a simple recipe:
          Create a friendly greeting for {{greeting}}.
    ```
 
+## Creating Workflows
+
+### Step References
+
+Recipes support cross-step references using the `#step_id` syntax. This makes it easy to:
+
+- Track data flow between steps
+- Understand step dependencies
+- Create clear, maintainable workflows
+
+When viewing the generated documentation, step references are automatically formatted to show:
+
+- "the previous step (1. Step Name)" for the immediately preceding step
+- "the next step (3. Step Name)" for the immediately following step
+- "step 2 (Step Name)" for other steps
+
+This helps users understand both the sequence and relationships between steps.
+
+#### Example
+
+```yaml
+workflow:
+  - id: data_collection
+    name: Collect Data
+    tool: perplexity
+    output_handling: Save results for #analysis
+
+  - id: analysis
+    name: Analyze Data
+    tool: claude
+    input_source: Research data from #data_collection
+    tool_usage: |
+      1. Review the data from #data_collection
+      2. Generate insights...
+    output_handling: Save analysis for #report
+
+  - id: report
+    name: Generate Report
+    tool: chatgpt
+    input_source: Analysis from #analysis
+```
+
+In this example:
+
+- Each step clearly shows where its input comes from
+- Output handling specifies which step will use the data
+- Tool usage instructions reference specific steps
+- The workflow's data flow is easy to follow
+
 ## Next Steps
 
 1. **Learn More**

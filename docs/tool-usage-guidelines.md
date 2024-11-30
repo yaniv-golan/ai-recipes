@@ -21,8 +21,69 @@ This guide explains how to write effective `tool_usage` instructions in recipe s
 
 4. **Provide Context**
    - Start with a context line if needed
-   - Reference input from previous steps
+   - Reference input from previous steps using #step_id
    - Indicate what to expect
+
+## Step References
+
+Steps can reference other steps using the `#step_id` syntax. This makes workflows easier to understand and maintain.
+
+### When to Use References
+
+1. **Input Sources**
+   - Specify where data comes from
+   - Reference files or outputs from previous steps
+   - Indicate data dependencies
+
+2. **Tool Usage Instructions**
+   - Reference specific steps when describing actions
+   - Make data flow explicit
+   - Provide clear context
+
+3. **Output Handling**
+   - Specify where output should go
+   - Reference next steps that will use the output
+   - Describe any required formatting
+
+4. **Notes and Context**
+   - Add references to related steps
+   - Explain dependencies
+   - Provide workflow context
+
+### Best Practices
+
+1. **Clear Dependencies**
+   - Use step references to make data flow explicit
+   - Reference steps by their ID, not just their number
+   - Include context about what's being passed
+
+2. **Readable References**
+   - Add descriptive text around references
+   - Specify the type of data being referenced
+   - Use complete sentences
+
+3. **Valid References**
+   - Only reference existing step IDs
+   - Avoid circular dependencies
+   - Keep references forward-looking when possible
+
+### Examples
+
+```yaml
+# Good - Clear references with context
+input_source: "Query results from #generate_queries"
+tool_usage: |
+  1. Take the analysis from #data_collection
+  2. Review each section...
+output_handling: "Save report for use in #final_analysis"
+
+# Bad - Vague references without context
+input_source: "#previous_step"
+tool_usage: |
+  1. Use #step1
+  2. Do analysis...
+output_handling: "Save for #next"
+```
 
 ## Format
 
