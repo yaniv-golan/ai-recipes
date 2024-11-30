@@ -1,0 +1,47 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ChatGPT Tool Schema",
+    "allOf": [
+        {
+            "$ref": "../tool-schema.json"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "The prompt to send to ChatGPT"
+                },
+                "model": {
+                    "type": "string",
+                    "enum": [
+                        "GPT-4o",
+                        "GPT-4o with canvas (beta)",
+                        "o1-preview",
+                        "o1-mini",
+                        "GPT-4o-mini",
+                        "GPT-4"
+                    ],
+                    "description": "Model to use for this workflow step"
+                },
+                "settings": {
+                    "type": "object",
+                    "properties": {
+                        "enable_web_search": {
+                            "type": [
+                                "boolean",
+                                "null"
+                            ],
+                            "description": "Enable web search capabilities."
+                        }
+                    },
+                    "additionalProperties": false
+                }
+            },
+            "required": [
+                "prompt"
+            ],
+            "additionalProperties": false
+        }
+    ]
+}

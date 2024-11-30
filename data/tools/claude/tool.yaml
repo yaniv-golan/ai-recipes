@@ -1,0 +1,4 @@
+id: claude
+name: "Claude"
+description: "Anthropic's Claude AI model for text analysis and generation"
+icon: icon.svg
