@@ -125,10 +125,6 @@ export function Recipe() {
     const [parameterValues, setParameterValues] = useState<Record<string, string>>({});
     const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-    // Debug: Log parameter values whenever they change
-    useEffect(() => {
-    }, [parameterValues]);
-
     const handleParameterChange = (name: string, value: string) => {
         setParameterValues(prev => {
             const newValues = {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { WorkflowStep } from '../types/workflow';
+import { WorkflowStep, Tool } from '../types/workflow';
 import { ToolsForm } from './ToolsForm';
 import { TOOL_CONFIGS } from '../utils/tools';
 import { validateStepReferences } from '../utils/stepReferences';
@@ -121,7 +121,7 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                     onChange={(e) => updateStep(index, field, e.target.value)}
                     rows={rows}
                     className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!validation.isValid ? 'border-red-300' :
-                            !String(value).trim() && required ? 'border-red-300' : 'border-gray-300'
+                        !String(value).trim() && required ? 'border-red-300' : 'border-gray-300'
                         }`}
                     placeholder={placeholder}
                     required={required}

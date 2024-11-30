@@ -22,7 +22,6 @@ type PreviewFormProps = {
 
 export function PreviewForm({ data }: PreviewFormProps) {
     const [yaml, setYaml] = useState('');
-    const [copied, setCopied] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [githubUser, setGithubUser] = useState<string | null>(null);
     const [isCheckingAuth, setIsCheckingAuth] = useState(false);
@@ -107,16 +106,6 @@ export function PreviewForm({ data }: PreviewFormProps) {
 
         const url = `https://github.com/yaniv-golan/ai-recipes/new/main?filename=${path}&value=${encodedYaml}&message=${prTitle}&description=${prBody}`;
         window.open(url, '_blank');
-    };
-
-    const handleCopy = async () => {
-        try {
-            await navigator.clipboard.writeText(yaml);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (error) {
-            console.error('Error copying to clipboard:', error);
-        }
     };
 
     const handleDownload = () => {

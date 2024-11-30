@@ -32,13 +32,25 @@ const toolConfigs = import.meta.glob<ToolConfig>('../../../tools/*/tool.yaml', {
     import: 'default'
 });
 
+// Type guard for schema validation
+function isValidSchema(data: unknown): data is { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] } {
+    return (
+        data !== null &&
+        typeof data === 'object' &&
+        'allOf' in data &&
+        Array.isArray((data as any).allOf) &&
+        (data as any).allOf.length === 2 &&
+        typeof (data as any).allOf[1] === 'object' &&
+        'properties' in (data as any).allOf[1]
+    );
+}
+
 // Function to load tool schemas
 async function loadToolSchemas() {
     const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] }> = {};
     const failedTools: string[] = [];
 
     try {
-        // Load individual tool schemas
         const toolIds = Object.keys(toolConfigs).map(path => path.split('/').slice(-2)[0]);
 
         for (const toolId of toolIds) {
@@ -49,7 +61,6 @@ async function loadToolSchemas() {
                 }
                 const data = await response.json();
 
-                // Type guard to ensure schema structure
                 if (!isValidSchema(data)) {
                     throw new Error('Invalid schema structure');
                 }
@@ -57,7 +68,7 @@ async function loadToolSchemas() {
                 schemas[toolId] = data;
             } catch (error) {
                 failedTools.push(toolId);
-                console.error(`Failed to load schema for tool ${toolId}:`, error);
+                console.error(`Failed to load schema for tool ${toolId}:`, error instanceof Error ? error.message : String(error));
 
                 // Fallback: Create a minimal valid schema structure
                 schemas[toolId] = {
@@ -76,22 +87,11 @@ async function loadToolSchemas() {
             console.warn('Some tool schemas failed to load:', failedTools);
         }
     } catch (error) {
-        console.error('Critical error loading tool schemas:', error);
+        console.error('Critical error loading tool schemas:', error instanceof Error ? error.message : String(error));
         throw new Error('Failed to initialize tool schemas');
     }
 
     return schemas;
-}
-
-// Type guard for schema validation
-function isValidSchema(data: any): data is { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] } {
-    return (
-        data &&
-        Array.isArray(data.allOf) &&
-        data.allOf.length === 2 &&
-        typeof data.allOf[1] === 'object' &&
-        'properties' in data.allOf[1]
-    );
 }
 
 // Initialize tool configs with basic info first
