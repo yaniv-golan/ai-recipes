@@ -44,13 +44,13 @@ A systematic approach to market analysis that combines Claude's query generation
 title: Workflow
 ---
 graph TD
-    query_generation["Research Query Generation<br>(claude)"]
-    query_generation -->|Copy queries for next step| setup_document
-    setup_document["Research Document Setup<br>(google_docs)"]
+    query_generation["Research Query Generation<br/>claude"]
+    query_generation -->|Output| setup_document
+    setup_document["Research Document Setup<br/>google_docs"]
     setup_document -->|Output| research_execution
-    research_execution["Research Data Collection<br>(perplexity)"]
-    research_execution -->|Save document as PDF when complete| synthesis_analysis
-    synthesis_analysis["Report Generation<br>(chatgpt)"]
+    research_execution["Research Data Collection<br/>perplexity"]
+    research_execution -->|Output| synthesis_analysis
+    synthesis_analysis["Report Generation<br/>chatgpt"]
 
 ```
 
@@ -64,16 +64,16 @@ graph TD
 
 ## Tools Required
 
+### google_docs
+
+
 ### perplexity
-
-
-### chatgpt
 
 
 ### claude
 
 
-### google_docs
+### chatgpt
 
 
 

@@ -1,8 +1,8 @@
 graph TD
-    query_generation["Competitive Query Generation<br>(claude)"]
-    query_generation -->|Copy queries for next step| setup_document
-    setup_document["Research Document Setup<br>(google_docs)"]
+    query_generation["Competitive Query Generation<br/>claude"]
+    query_generation -->|Output| setup_document
+    setup_document["Research Document Setup<br/>google_docs"]
     setup_document -->|Output| research_execution
-    research_execution["Competitive Research Collection<br>(perplexity)"]
-    research_execution -->|Save document as PDF when complete| competitive_assessment
-    competitive_assessment["Competitive Analysis Generation<br>(chatgpt)"]
+    research_execution["Research Data Collection<br/>perplexity"]
+    research_execution -->|Output| competitive_assessment
+    competitive_assessment["Competitive Analysis Generation<br/>chatgpt"]

@@ -41,8 +41,31 @@ def process_step_references(text, workflow_steps, current_step_index):
             
     return re.sub(r'#([a-z0-9_-]+)', replace_reference, text)
 
-def generate_readme(recipe_data, workflow_diagram, description=''):
+def generate_workflow_diagram(workflow_steps):
+    """Generate Mermaid workflow diagram."""
+    mermaid = 'graph TD\n'
+
+    for i, step in enumerate(workflow_steps):
+        step_id = step['id']
+        step_name = step['name']
+        tool_name = step['tool']['name'] if isinstance(step['tool'], dict) else step['tool']
+        
+        # Add node with step name and tool name
+        mermaid += f'    {step_id}["{step_name}<br/>{tool_name}"]\n'
+        
+        # Add connection to next step if not last step
+        if i < len(workflow_steps) - 1:
+            next_step_id = workflow_steps[i + 1]['id']
+            mermaid += f'    {step_id} -->|Output| {next_step_id}\n'
+    
+    return mermaid
+
+def generate_readme(recipe_data, workflow_diagram=None, description=''):
     """Generate complete README content."""
+    # Generate workflow diagram if not provided
+    if not workflow_diagram:
+        workflow_diagram = generate_workflow_diagram(recipe_data.get('workflow', []))
+
     parameters_table = '| Parameter | Required | Description | Example |\n'
     parameters_table += '|-----------|----------|-------------|----------|\n'
     
@@ -145,15 +168,15 @@ title: Workflow
 def process_recipe_dir(recipe_dir):
     """Process a single recipe directory."""
     try:
-        # Read required files
+        # Read recipe.yaml
         with open(recipe_dir / 'recipe.yaml', 'r') as f:
             recipe_data = yaml.safe_load(f)
             
-        # Read workflow.mmd
-        workflow_diagram = read_file_if_exists(recipe_dir / 'workflow.mmd')
-        
         # Read description.md if it exists
         description = read_file_if_exists(recipe_dir / 'description.md')
+        
+        # Generate workflow diagram
+        workflow_diagram = generate_workflow_diagram(recipe_data.get('workflow', []))
         
         # Generate README content
         readme_content = generate_readme(recipe_data, workflow_diagram, description)
@@ -161,6 +184,10 @@ def process_recipe_dir(recipe_dir):
         # Write README.md
         with open(recipe_dir / 'README.md', 'w') as f:
             f.write(readme_content)
+            
+        # Write workflow.mmd
+        with open(recipe_dir / 'workflow.mmd', 'w') as f:
+            f.write(workflow_diagram)
             
         return None
     except Exception as e:
