@@ -35,6 +35,7 @@ const toolConfigs = import.meta.glob<ToolConfig>('../../../tools/*/tool.yaml', {
 // Function to load tool schemas
 async function loadToolSchemas() {
     const schemas: Record<string, { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] }> = {};
+    const failedTools: string[] = [];
 
     try {
         // Load individual tool schemas
@@ -43,18 +44,54 @@ async function loadToolSchemas() {
         for (const toolId of toolIds) {
             try {
                 const response = await fetch(`/ai-recipes/data/schemas/${toolId}.json`);
-                if (response.ok) {
-                    schemas[toolId] = await response.json();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                const data = await response.json();
+
+                // Type guard to ensure schema structure
+                if (!isValidSchema(data)) {
+                    throw new Error('Invalid schema structure');
+                }
+
+                schemas[toolId] = data;
             } catch (error) {
-                console.warn(`Failed to load schema for tool ${toolId}:`, error);
+                failedTools.push(toolId);
+                console.error(`Failed to load schema for tool ${toolId}:`, error);
+
+                // Fallback: Create a minimal valid schema structure
+                schemas[toolId] = {
+                    allOf: [
+                        {},
+                        {
+                            properties: {},
+                            required: []
+                        }
+                    ]
+                };
             }
         }
+
+        if (failedTools.length > 0) {
+            console.warn('Some tool schemas failed to load:', failedTools);
+        }
     } catch (error) {
-        console.error('Failed to load tool schemas:', error);
+        console.error('Critical error loading tool schemas:', error);
+        throw new Error('Failed to initialize tool schemas');
     }
 
     return schemas;
+}
+
+// Type guard for schema validation
+function isValidSchema(data: any): data is { allOf: [any, { properties: ToolSchema['properties'], required?: string[] }] } {
+    return (
+        data &&
+        Array.isArray(data.allOf) &&
+        data.allOf.length === 2 &&
+        typeof data.allOf[1] === 'object' &&
+        'properties' in data.allOf[1]
+    );
 }
 
 // Initialize tool configs with basic info first
