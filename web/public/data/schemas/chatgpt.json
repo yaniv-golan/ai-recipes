@@ -8,10 +8,6 @@
         {
             "type": "object",
             "properties": {
-                "tool_usage": {
-                    "type": "string",
-                    "description": "How the tool should be used in this step"
-                },
                 "prompt": {
                     "type": "string",
                     "description": "The prompt to send to ChatGPT"
@@ -43,7 +39,6 @@
                 }
             },
             "required": [
-                "tool_usage",
                 "prompt"
             ],
             "additionalProperties": false
