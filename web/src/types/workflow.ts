@@ -35,6 +35,8 @@ export type Example = {
 export type Recipe = {
     name: string;
     description: string;
+    author: string;
+    path: string;
     tags: string[];
     parameters: Parameter[];
     workflow: WorkflowStep[];

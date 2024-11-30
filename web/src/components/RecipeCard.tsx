@@ -7,7 +7,7 @@ interface RecipeCardProps {
     author: string;
     path: string;
     tags: string[];
-    onTagClick?: (tag: string) => void;
+    onTagClick: (tag: string) => void;
 }
 
 function truncateText(text: string, maxLength: number = 150): string {
@@ -38,37 +38,38 @@ export function RecipeCard({ title, description, author, path, tags, onTagClick 
     const cleanDescription = truncateText(stripMarkdown(description));
 
     return (
-        <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
-            <Link to={`/recipe/${path}`} className="block">
-                <div className="flex justify-between items-start">
-                    <h2 className="text-xl font-semibold text-gray-900 hover:text-indigo-600">{title}</h2>
-                </div>
-                <p className="mt-2 text-gray-600 hover:text-gray-900">{cleanDescription}</p>
-            </Link>
-            <div className="mt-4 flex flex-wrap gap-2">
-                {tags.map(tag => (
-                    <button
-                        key={tag}
-                        onClick={(e) => handleTagClick(tag, e)}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 hover:bg-indigo-200 transition-colors cursor-pointer"
+        <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-6">
+                <div className="flex items-start justify-between">
+                    <div>
+                        <Link
+                            to={`/recipe/${path}`}
+                            className="text-xl font-semibold text-gray-900 hover:text-blue-600"
+                        >
+                            {title}
+                        </Link>
+                    </div>
+                    <Link
+                        to={`/author/${author}`}
+                        className="text-sm text-gray-600 hover:text-blue-600"
                     >
-                        {tag}
-                    </button>
-                ))}
-            </div>
-            <div className="mt-4 flex justify-between items-center">
-                <Link
-                    to={`/author/${author}`}
-                    className="text-sm text-gray-500 hover:text-indigo-600"
-                >
-                    By {author}
-                </Link>
-                <Link
-                    to={`/recipe/${path}`}
-                    className="text-indigo-600 hover:text-indigo-500 font-medium text-sm"
-                >
-                    View Recipe →
-                </Link>
+                        {author}
+                    </Link>
+                </div>
+                <p className="mt-2 text-gray-600 text-sm line-clamp-2">{cleanDescription}</p>
+                {tags.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        {tags.map(tag => (
+                            <button
+                                key={tag}
+                                onClick={() => onTagClick(tag)}
+                                className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                                {tag}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

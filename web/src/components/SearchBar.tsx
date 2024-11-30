@@ -6,13 +6,15 @@ interface SearchBarProps {
     value: string;
     onChange: (value: string) => void;
     disabled?: boolean;
+    placeholder?: string;
 }
 
 export function SearchBar({
     className = '',
     value,
     onChange,
-    disabled = false
+    disabled = false,
+    placeholder = 'Search recipes...'
 }: SearchBarProps) {
     return (
         <div className={`relative ${className}`}>
@@ -22,7 +24,7 @@ export function SearchBar({
             />
             <input
                 type="text"
-                placeholder="Search recipes..."
+                placeholder={placeholder}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled}
