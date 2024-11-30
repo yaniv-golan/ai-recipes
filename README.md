@@ -57,8 +57,8 @@ recipes/
 
 * **`recipes/<your-github-username>/`**: Create a directory under `recipes` with your GitHub username.
 * **`recipes/<your-github-username>/<recipe-name>/`**:  Create a directory for your recipe with a descriptive, URL-friendly name.
-* **`recipe.yaml`**: This **required** file defines the recipe's metadata, parameters, tools, and workflow steps in YAML.  Validate it against `schema/recipe-schema.json`.
-* **`description.md` (optional)**:  A concise overview of the recipe, incorporated into the generated `README.md` after the title and before the main `recipe.yaml` description.
+* **`recipe.yaml`**: This **required** file defines the recipe's metadata, parameters, tools, and workflow steps in YAML.  Validate it against `schema/recipe-schema.json`. See [tool usage guidelines](docs/tool-usage-guidelines.md) for writing effective tool instructions.
+* **`description.md` (optional)**:  A concise overview of the recipe, incorporated into the generated `README.md` after the title and before the main `recipe.yaml` description. See [description guidelines](docs/description-guidelines.md) for formatting rules.
 
 These files are **automatically generated**:
 
