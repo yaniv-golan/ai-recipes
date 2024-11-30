@@ -47,8 +47,8 @@ The project uses:
 ```
 web/
 ├── public/
-│   └── data/        # Generated tool data
-│       ├── tools/   # Tool configurations and icons
+│   └── data/        # Generated tool and recipe data
+│       ├── tools/   # Tool configurations, icons, and assets
 │       └── schemas/ # JSON schemas for validation
 ├── src/
 │   ├── components/  # React components
@@ -94,6 +94,10 @@ Tools are configured through multiple layers:
 1. Process recipes and tool configurations:
 
 ```bash
+# Sync tool configurations (if needed)
+./scripts/sync-tools.sh
+
+# Process recipes
 npm run process-recipes
 ```
 
@@ -106,6 +110,7 @@ npm run build
 3. Deploy (automated via GitHub Actions):
 
 - Pushes to main branch trigger deployment
+- Tool configurations are automatically synced
 - Uses GitHub Pages for hosting
 - Accessible at /ai-recipes/
 

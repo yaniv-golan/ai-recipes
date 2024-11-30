@@ -95,7 +95,6 @@ The `sync-tools.sh` script automates the synchronization of tool configurations:
 
 - Copies tool assets to web/public/data/tools
 - Copies schemas to web/public/data/schemas
-- Commits changes if running locally
 
 Usage:
 
@@ -103,4 +102,4 @@ Usage:
 ./scripts/sync-tools.sh
 ```
 
-This script mirrors the GitHub Actions workflow that runs automatically when tool configurations change.
+This script works in conjunction with the GitHub Actions workflow that runs automatically when tool configurations change.
