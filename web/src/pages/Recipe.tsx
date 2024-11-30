@@ -60,8 +60,8 @@ function ToolIcon({ toolId, name, className = "w-4 h-4" }: { toolId: string; nam
     const [error, setError] = useState(false);
     const toolName = name.toLowerCase();
     const toolConfig = TOOL_CONFIGS[toolName];
-    const iconPath = toolConfig?.icon || '/ai-recipes/tools/default-icon.svg';
-    const defaultIcon = '/ai-recipes/tools/default-icon.svg';
+    const iconPath = toolConfig?.icon || '/ai-recipes/data/tools/default-icon.svg';
+    const defaultIcon = '/ai-recipes/data/tools/default-icon.svg';
 
     return (
         <img

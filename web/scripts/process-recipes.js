@@ -45,8 +45,8 @@ function generateMermaidDiagram(workflow) {
  * @param {string} outputDir - Output directory path
  */
 async function copyToolIcons(tools, outputDir) {
-    // Copy to /public/tools - this is where Vite serves static assets from
-    const toolsPublicDir = path.join(__dirname, '../public/tools');
+    // Copy to /public/data/tools - single source of truth for tool assets
+    const toolsPublicDir = path.join(__dirname, '../public/data/tools');
     await fs.mkdir(toolsPublicDir, { recursive: true });
 
     // Copy default icon
