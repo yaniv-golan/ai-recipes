@@ -6,6 +6,7 @@ Generate README.md files from recipe.yaml, workflow.mmd, and description.md
 import os
 import sys
 import yaml
+import re
 from pathlib import Path
 
 def read_file_if_exists(path):
@@ -16,26 +17,53 @@ def read_file_if_exists(path):
     except FileNotFoundError:
         return ''
 
+def process_step_references(text, workflow_steps, current_step_index):
+    """Replace #step_id references with human-readable text."""
+    if not text:
+        return text
+        
+    step_map = {step['id']: (i, step['name']) for i, step in enumerate(workflow_steps)}
+    
+    def replace_reference(match):
+        step_id = match.group(1)
+        if step_id not in step_map:
+            return f"#{step_id}"  # Keep original if step not found
+            
+        step_index, step_name = step_map[step_id]
+        step_number = step_index + 1
+        
+        if step_index == current_step_index - 1:
+            return f"the previous step ({step_number}. {step_name})"
+        elif step_index == current_step_index + 1:
+            return f"the next step ({step_number}. {step_name})"
+        else:
+            return f"step {step_number} ({step_name})"
+            
+    return re.sub(r'#([a-z0-9_-]+)', replace_reference, text)
+
 def generate_readme(recipe_data, workflow_diagram, description=''):
     """Generate complete README content."""
     parameters_table = '| Parameter | Required | Description | Example |\n'
     parameters_table += '|-----------|----------|-------------|----------|\n'
     
-    for param in recipe_data['parameters']:
+    for param in recipe_data.get('parameters', []):
         required = 'Yes' if param.get('required', False) else 'No'
-        parameters_table += f"| {param['name']} | {required} | {param['description']} | {param['example']} |\n"
+        parameters_table += f"| {param['name']} | {required} | {param['description']} | {param.get('example', '')} |\n"
     
     # Generate tools section
     tools_section = ''
-    for tool_name, tool_info in recipe_data['tools'].items():
+    workflow_tools = set()
+    for step in recipe_data.get('workflow', []):
+        if isinstance(step.get('tool'), dict):
+            tool_name = step['tool'].get('name')
+        else:
+            tool_name = step.get('tool')
+        if tool_name:
+            workflow_tools.add(tool_name)
+    
+    for tool_name in workflow_tools:
         tools_section += f'### {tool_name}\n\n'
-        if 'used_for' in tool_info:
-            for use in tool_info['used_for']:
-                tools_section += f'- {use}\n'
-        if 'settings' in tool_info:
-            tools_section += '\n**Settings:**\n\n'
-            for setting, value in tool_info['settings'].items():
-                tools_section += f'- {setting}: {value}\n'
+        # Add any tool-specific information here if needed
         tools_section += '\n'
     
     readme = f"""# {recipe_data['name']}
@@ -65,14 +93,30 @@ title: Workflow
 """
     
     # Add workflow steps
-    for step in recipe_data['workflow']:
-        readme += f"### {step['name']}\n\n"
-        readme += f"{step['description']}\n\n"
+    workflow_steps = recipe_data.get('workflow', [])
+    for i, step in enumerate(workflow_steps):
+        readme += f"### {i+1}. {step['name']}\n\n"
+        
+        # Process step references in description
+        processed_description = process_step_references(step['description'], workflow_steps, i)
+        readme += f"{processed_description}\n\n"
+        
+        if 'input_source' in step:
+            processed_input = process_step_references(step['input_source'], workflow_steps, i)
+            readme += f"**Input:** {processed_input}\n\n"
+            
         if 'tool_usage' in step:
+            processed_usage = process_step_references(step['tool_usage'], workflow_steps, i)
             readme += "**Usage:**\n"
-            readme += f"{step['tool_usage']}\n\n"
+            readme += f"{processed_usage}\n\n"
+            
+        if 'output_handling' in step:
+            processed_output = process_step_references(step['output_handling'], workflow_steps, i)
+            readme += f"**Output:** {processed_output}\n\n"
+            
         if 'notes' in step:
-            readme += f"**Note:** {step['notes']}\n\n"
+            processed_notes = process_step_references(step['notes'], workflow_steps, i)
+            readme += f"**Note:** {processed_notes}\n\n"
     
     # Add tips if present
     if 'tips' in recipe_data:
@@ -87,7 +131,7 @@ title: Workflow
         for example in recipe_data['examples']:
             readme += "### Example Usage\n\n"
             readme += "Parameters:\n```yaml\n"
-            for param, value in example['parameters'].items():
+            for param, value in example.get('parameters', {}).items():
                 readme += f"{param}: {value}\n"
             readme += "```\n\n"
             if 'sample_queries' in example:

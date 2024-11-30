@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { WorkflowStep } from '../types/workflow';
 import { ToolsForm } from './ToolsForm';
-import { TOOL_CONFIGS, ToolConfig } from '../utils/tools';
+import { TOOL_CONFIGS } from '../utils/tools';
+import { validateStepReferences } from '../utils/stepReferences';
 
 type WorkflowStepsFormProps = {
     steps: WorkflowStep[];
@@ -11,30 +12,17 @@ type WorkflowStepsFormProps = {
 export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
     const [draggedStep, setDraggedStep] = useState<number | null>(null);
 
-    const addStep = () => {
-        const newStep: WorkflowStep = {
-            id: `step-${Date.now()}`,
-            name: '',
-            tool: {
-                id: '',
-                name: '',
-                model: '',
-                settings: {}
-            },
-            description: '',
-            tool_usage: '',
-            prompt: '',
-            output_handling: '',
-            notes: ''
-        };
-        onChange([...steps, newStep]);
+    const sanitizeId = (name: string): string => {
+        return name.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '')
+            .replace(/_+/g, '_');
     };
 
     const updateStep = (index: number, field: keyof WorkflowStep, value: any) => {
         const updatedSteps = steps.map((step, i) => {
             if (i === index) {
-                if (field === 'tool' && 'name' in value) {
-                    // When tool is selected, initialize it with the config
+                if (field === 'tool' && typeof value === 'object' && 'name' in value) {
                     const toolConfig = TOOL_CONFIGS[value.name];
                     if (toolConfig) {
                         value = {
@@ -49,6 +37,35 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
             return step;
         });
         onChange(updatedSteps);
+    };
+
+    const handleNameBlur = (index: number, name: string) => {
+        const step = steps[index];
+        const isTimestampId = /^step-\d+$/.test(step.id);
+        if (step.id === '' || step.id === sanitizeId(step.name) || isTimestampId) {
+            const updatedSteps = [...steps];
+            updatedSteps[index] = { ...step, id: sanitizeId(name) };
+            onChange(updatedSteps);
+        }
+    };
+
+    const addStep = () => {
+        const newStep: WorkflowStep = {
+            id: '',
+            name: '',
+            tool: {
+                id: '',
+                name: '',
+                model: '',
+                settings: {}
+            },
+            description: '',
+            tool_usage: '',
+            prompt: '',
+            output_handling: '',
+            notes: ''
+        };
+        onChange([...steps, newStep]);
     };
 
     const removeStep = (index: number) => {
@@ -71,6 +88,53 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
         setDraggedStep(index);
     };
 
+    const renderTextArea = (
+        index: number,
+        field: Exclude<keyof WorkflowStep, 'id' | 'name' | 'tool'>,
+        label: string,
+        placeholder: string,
+        required: boolean = false,
+        rows: number = 2
+    ) => {
+        const step = steps[index];
+        const value = step[field] || '';
+
+        // Only validate text fields that can contain step references
+        const shouldValidateRefs = ['description', 'input_source', 'tool_usage', 'output_handling', 'notes'].includes(field);
+        const validation = shouldValidateRefs && typeof value === 'string'
+            ? validateStepReferences(value, steps)
+            : { isValid: true, invalidRefs: [] };
+
+        return (
+            <div className="mt-4">
+                <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                        {label}
+                        {required && <span className="text-red-600 ml-1">*</span>}
+                    </label>
+                    {required && !String(value).trim() && (
+                        <span className="text-sm text-red-600">Required</span>
+                    )}
+                </div>
+                <textarea
+                    value={String(value)}
+                    onChange={(e) => updateStep(index, field, e.target.value)}
+                    rows={rows}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!validation.isValid ? 'border-red-300' :
+                            !String(value).trim() && required ? 'border-red-300' : 'border-gray-300'
+                        }`}
+                    placeholder={placeholder}
+                    required={required}
+                />
+                {!validation.isValid && (
+                    <div className="mt-1 text-sm text-red-600">
+                        Invalid step references: {validation.invalidRefs.map(ref => `#${ref}`).join(', ')}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="space-y-6">
             {steps.length === 0 ? (
@@ -88,7 +152,7 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                 <div className="space-y-6">
                     {steps.map((step, index) => (
                         <div
-                            key={step.id}
+                            key={step.id || index}
                             draggable
                             onDragStart={() => handleDragStart(index)}
                             onDragOver={(e) => handleDragOver(e, index)}
@@ -98,13 +162,13 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                             <button
                                 type="button"
                                 onClick={() => removeStep(index)}
-                                className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                                className="absolute top-4 right-4 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600"
                             >
                                 <span className="sr-only">Remove step</span>
                                 ×
                             </button>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 pr-8">
                                 <div>
                                     <div className="flex items-center justify-between">
                                         <label className="block text-sm font-medium text-gray-700">
@@ -119,6 +183,7 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                         type="text"
                                         value={step.name}
                                         onChange={(e) => updateStep(index, 'name', e.target.value)}
+                                        onBlur={(e) => handleNameBlur(index, e.target.value)}
                                         className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.name.trim() ? 'border-red-300' : 'border-gray-300'}`}
                                         placeholder="Name this step"
                                         required
@@ -128,36 +193,56 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                 <div>
                                     <div className="flex items-center justify-between">
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Tool
+                                            Step ID
                                             <span className="text-red-600 ml-1">*</span>
                                         </label>
-                                        {!step.tool.name && (
+                                        {!String(step.id).trim() && (
                                             <span className="text-sm text-red-600">Required</span>
                                         )}
                                     </div>
-                                    <select
-                                        value={step.tool.id}
-                                        onChange={(e) => {
-                                            const toolId = e.target.value;
-                                            const toolConfig = TOOL_CONFIGS[toolId];
-                                            updateStep(index, 'tool', {
-                                                id: toolId,
-                                                name: toolConfig?.name || '',
-                                                model: '',
-                                                settings: {}
-                                            });
-                                        }}
-                                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.tool.id ? 'border-red-300' : 'border-gray-300'}`}
+                                    <input
+                                        type="text"
+                                        value={step.id}
+                                        onChange={(e) => updateStep(index, 'id', e.target.value)}
+                                        className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!String(step.id).trim() ? 'border-red-300' : 'border-gray-300'}`}
+                                        placeholder="step_id"
                                         required
-                                    >
-                                        <option value="">Select a tool</option>
-                                        {Object.keys(TOOL_CONFIGS).map(id => (
-                                            <option key={id} value={id}>
-                                                {TOOL_CONFIGS[id].name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    />
                                 </div>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Tool
+                                        <span className="text-red-600 ml-1">*</span>
+                                    </label>
+                                    {!step.tool.name && (
+                                        <span className="text-sm text-red-600">Required</span>
+                                    )}
+                                </div>
+                                <select
+                                    value={step.tool.id}
+                                    onChange={(e) => {
+                                        const toolId = e.target.value;
+                                        const toolConfig = TOOL_CONFIGS[toolId];
+                                        updateStep(index, 'tool', {
+                                            id: toolId,
+                                            name: toolConfig?.name || '',
+                                            model: '',
+                                            settings: {}
+                                        });
+                                    }}
+                                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.tool.id ? 'border-red-300' : 'border-gray-300'}`}
+                                    required
+                                >
+                                    <option value="">Select a tool</option>
+                                    {Object.keys(TOOL_CONFIGS).map(id => (
+                                        <option key={id} value={id}>
+                                            {TOOL_CONFIGS[id].name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             {step.tool.name && (
@@ -169,81 +254,53 @@ export function WorkflowStepsForm({ steps, onChange }: WorkflowStepsFormProps) {
                                 </div>
                             )}
 
-                            <div className="mt-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Description
-                                        <span className="text-red-600 ml-1">*</span>
-                                    </label>
-                                    {!step.description.trim() && (
-                                        <span className="text-sm text-red-600">Required</span>
-                                    )}
-                                </div>
-                                <textarea
-                                    value={step.description}
-                                    onChange={(e) => updateStep(index, 'description', e.target.value)}
-                                    rows={2}
-                                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!step.description.trim() ? 'border-red-300' : 'border-gray-300'}`}
-                                    placeholder="Describe what this step does"
-                                    required
-                                />
-                            </div>
-
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Tool Usage
-                                </label>
-                                <textarea
-                                    value={step.tool_usage}
-                                    onChange={(e) => updateStep(index, 'tool_usage', e.target.value)}
-                                    rows={2}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                    placeholder="Describe how the tool should be used (optional)"
-                                />
-                            </div>
-
-                            {TOOL_CONFIGS[step.tool.id]?.requiredFields?.includes('prompt') && (
-                                <div className="mt-4">
-                                    <label className="block text-sm font-medium text-gray-700">
-                                        Prompt
-                                        <span className="text-red-600 ml-1">*</span>
-                                    </label>
-                                    <textarea
-                                        value={step.prompt}
-                                        onChange={(e) => updateStep(index, 'prompt', e.target.value)}
-                                        rows={3}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                        placeholder="Enter the prompt for this step"
-                                        required
-                                    />
-                                </div>
+                            {renderTextArea(
+                                index,
+                                'description',
+                                'Description',
+                                'Describe what this step does (use #step_id to reference other steps)',
+                                true
                             )}
 
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Output Handling
-                                </label>
-                                <textarea
-                                    value={step.output_handling}
-                                    onChange={(e) => updateStep(index, 'output_handling', e.target.value)}
-                                    rows={2}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                    placeholder="Describe how to handle the output (optional)"
-                                />
-                            </div>
+                            {renderTextArea(
+                                index,
+                                'input_source',
+                                'Input Source',
+                                "Describe where the input comes from (e.g., 'Output from #step_id')"
+                            )}
 
-                            <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Notes
-                                </label>
-                                <textarea
-                                    value={step.notes}
-                                    onChange={(e) => updateStep(index, 'notes', e.target.value)}
-                                    rows={2}
-                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                                    placeholder="Additional notes about this step (optional)"
-                                />
-                            </div>
+                            {renderTextArea(
+                                index,
+                                'tool_usage',
+                                'Tool Usage',
+                                'Describe how the tool should be used (use #step_id to reference other steps)',
+                                true
+                            )}
+
+                            {TOOL_CONFIGS[step.tool.id]?.requiredFields?.includes('prompt') && (
+                                renderTextArea(
+                                    index,
+                                    'prompt',
+                                    'Prompt',
+                                    'Enter the prompt for this step',
+                                    true,
+                                    3
+                                )
+                            )}
+
+                            {renderTextArea(
+                                index,
+                                'output_handling',
+                                'Output Handling',
+                                "Describe how to handle the output (e.g., 'Save for use in #step_id')"
+                            )}
+
+                            {renderTextArea(
+                                index,
+                                'notes',
+                                'Notes',
+                                'Additional notes about this step (use #step_id to reference other steps)'
+                            )}
                         </div>
                     ))}
 

@@ -1,5 +1,33 @@
-# competitive-intelligence
+# Competitive Intelligence
 
+# Competitive Intelligence Workflow
+
+This workflow provides a systematic approach to competitive intelligence gathering and analysis, leveraging the unique capabilities of multiple AI tools to create comprehensive competitive analysis reports.
+
+## Overview
+
+The workflow combines three powerful AI tools in a synergistic manner:
+
+- Claude's analytical capabilities for generating targeted research queries
+- Perplexity's advanced research capabilities for gathering accurate, up-to-date competitive information
+- ChatGPT's synthesis abilities for creating cohesive, insightful competitive analysis reports
+
+## Key Benefits
+
+1. **Structured Research Process**: The workflow follows a methodical approach, ensuring comprehensive coverage of all critical competitive aspects including market share, product comparisons, strategic positioning, and customer feedback.
+
+2. **Data-Driven Analysis**: By leveraging Perplexity's research capabilities, the workflow ensures that all competitive insights are based on current, factual data rather than outdated or speculative information.
+
+3. **Comprehensive Coverage**: The analysis covers multiple dimensions of competitive intelligence:
+   - Market share and revenue analysis
+   - Product and feature comparisons
+   - Pricing strategies and models
+   - Strategic positioning
+   - Customer sentiment and feedback
+
+4. **Actionable Insights**: The final output provides not just data, but actionable competitive intelligence that can inform strategic decision-making.
+
+This workflow is particularly valuable for businesses needing to maintain a deep understanding of their competitive landscape, whether for strategic planning, product development, or market positioning purposes.
 
 
 A systematic approach to competitive intelligence that combines Claude's query generation, Perplexity's research capabilities, and ChatGPT's synthesis to create comprehensive competitive analysis reports.
@@ -25,55 +53,29 @@ graph TD
 
 | Parameter | Required | Description | Example |
 |-----------|----------|-------------|----------|
-| company_name | Yes | Your company name for competitor analysis context | SimpliSafe |
-| target_industry | Yes | The industry to analyze competitors in | US smart home security market |
+| company_name | No | Your company name for competitor analysis context | SimpliSafe |
+| target_industry | No | The industry to analyze competitors in | US smart home security market |
 | competitors | No | List of key competitors to focus on | ADT, Ring, Vivint |
 
 
 ## Tools Required
 
-### claude
-
-- Query generation
-- Analysis framework development
-
-**Settings:**
-
-- model: Claude 3.5 Sonnet
-
 ### perplexity
 
-- Competitor research execution
-- Data gathering
-
-**Settings:**
-
-- focus: Web
-- enable_pro: True
 
 ### chatgpt
 
-- Data synthesis
-- Report generation
 
-**Settings:**
+### claude
 
-- model: GPT-4o
-- enable_web_search: False
 
 ### google_docs
 
-- Research documentation
-- Report organization
-
-**Settings:**
-
-- enable_markdown: True
 
 
 
 ## Workflow Steps
-### Competitive Query Generation
+### 1. Competitive Query Generation
 
 Generate focused competitor analysis queries
 
@@ -83,17 +85,21 @@ Generate focused competitor analysis queries
 3. Review and refine generated queries
 
 
+**Output:** Save queries for use in the next step (2. Research Document Setup)
+
 **Note:** Ensure queries cover market share, product comparison, strategy, financial performance, and customer feedback
 
-### Research Document Setup
+### 2. Research Document Setup
 
-Create and format Google Doc for competitor research
+Create and format Google Doc for research documentation
+
+**Input:** Queries from the previous step (1. Competitive Query Generation)
 
 **Usage:**
 1. Create new Google Doc
 2. Set title format: "[Date] - [Industry] - Competitive Analysis"
    Example: "2024-11-25 - Smart Home Security - Competitive Analysis"
-3. For each query from previous step:
+3. For each query from the previous step (1. Competitive Query Generation):
    a. Paste query text
    b. Format as Heading 1
    c. Press Enter twice to leave space for response
@@ -102,14 +108,16 @@ Create and format Google Doc for competitor research
 
 **Note:** Double-check formatting settings after each query addition
 
-### Competitive Research Collection
+### 3. Research Data Collection
 
-Execute competitor research queries and document findings
+Execute research queries and document findings
+
+**Input:** Queries from the previous step (2. Research Document Setup)
 
 **Usage:**
-For each research query in the Google Doc:
+For each research query in the Google Doc from the previous step (2. Research Document Setup):
 1. Copy query text
-2. Execute in Perplexity 
+2. Execute in Perplexity
 3. Wait for complete response
 4. Click 'Copy' button in Perplexity response
 5. Return to Google Doc
@@ -117,12 +125,16 @@ For each research query in the Google Doc:
 7. Add blank line before next query section
 
 
-### Competitive Analysis Generation
+**Output:** Save document as PDF for use in the next step (4. Competitive Analysis Generation)
+
+### 4. Competitive Analysis Generation
 
 Synthesize research findings into comprehensive competitive assessment
 
+**Input:** PDF from the previous step (3. Research Data Collection)
+
 **Usage:**
-1. Upload research PDF to ChatGPT
+1. Upload research PDF from the previous step (3. Research Data Collection)
 2. Use the provided analysis prompt
 3. Review output for completeness
 

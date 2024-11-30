@@ -55,7 +55,7 @@ workflow:
       3. **Style:** Keep queries clear, specific, and consistent in format.
 
       Please generate the 5 search queries accordingly.
-    output_handling: "Copy queries for next step"
+    output_handling: "Save queries for use in #setup_document"
     notes: "Ensure queries cover market share, product comparison, strategy, financial performance, and customer feedback"
 
   - id: "setup_document"
@@ -65,11 +65,12 @@ workflow:
       settings:
         enable_markdown: true
     description: "Create and format Google Doc for research documentation"
+    input_source: "Queries from #query_generation"
     tool_usage: |
       1. Create new Google Doc
       2. Set title format: "[Date] - [Industry] - Competitive Analysis"
          Example: "2024-11-25 - Smart Home Security - Competitive Analysis"
-      3. For each query from previous step:
+      3. For each query from #query_generation:
          a. Paste query text
          b. Format as Heading 1
          c. Press Enter twice to leave space for response
@@ -85,9 +86,9 @@ workflow:
         focus: "Academic"
         enable_pro: true
     description: "Execute research queries and document findings"
-    input_source: "queries from query_generation step"
+    input_source: "Queries from #setup_document"
     tool_usage: |
-      For each research query in the Google Doc:
+      For each research query in the Google Doc from #setup_document:
       1. Copy query text
       2. Execute in Perplexity
       3. Wait for complete response
@@ -95,7 +96,7 @@ workflow:
       5. Return to Google Doc
       6. Paste response under corresponding query heading
       7. Add blank line before next query section
-    output_handling: "Save document as PDF when complete"
+    output_handling: "Save document as PDF for use in #competitive_assessment"
 
   - id: "competitive_assessment"
     name: "Competitive Analysis Generation"
@@ -105,9 +106,9 @@ workflow:
       settings:
         enable_web_search: false
     description: "Synthesize research findings into comprehensive competitive assessment"
-    input_source: "PDF from research_execution step"
+    input_source: "PDF from #research_execution"
     tool_usage: |
-      1. Upload research PDF to ChatGPT
+      1. Upload research PDF from #research_execution
       2. Use the provided analysis prompt
       3. Review output for completeness
     prompt: |

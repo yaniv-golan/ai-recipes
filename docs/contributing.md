@@ -10,6 +10,7 @@ Thank you for your interest in contributing to AI Recipes! This guide will help 
 - [Application Development](#application-development)
 - [Pull Request Process](#pull-request-process)
 - [Development Setup](#development-setup)
+- [Recipe Submission Options](#recipe-submission-options)
 
 ## Code of Conduct
 
@@ -168,6 +169,24 @@ Key areas for contribution:
    - Update relevant docs
    - Add JSDoc comments
    - Include examples
+
+## Recipe Submission Options
+
+There are two ways to submit recipes:
+
+1. **Manual Submission (Recommended for Most Users)**
+   - Create your recipe files locally
+   - Download the YAML file from the recipe editor
+   - Create a pull request manually on GitHub
+   - No sign-in required
+
+2. **Direct Submission (Coming Soon)**
+   - Use the web interface to create recipes
+   - Sign in with GitHub
+   - Submit directly from the browser
+   - Currently under development
+
+Note: The "Sign in with GitHub" feature is currently unavailable as we set up proper OAuth credentials. Please use the manual submission process for now.
 
 ## Getting Help
 

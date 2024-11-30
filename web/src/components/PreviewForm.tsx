@@ -124,7 +124,7 @@ export function PreviewForm({ data }: PreviewFormProps) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${data.metadata.name}.yaml`;
+        a.download = 'recipe.yaml';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -133,41 +133,42 @@ export function PreviewForm({ data }: PreviewFormProps) {
 
     return (
         <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Enter recipe name"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                        Description <span className="text-red-500">*</span>
+                        <span className="text-gray-500 text-xs ml-1">(max 500 characters)</span>
+                    </label>
+                    <textarea
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        rows={3}
+                        placeholder="Brief overview of what this recipe does"
+                        required
+                        maxLength={500}
+                    />
+                </div>
+            </div>
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Generated YAML</h3>
-                <div className="space-x-4">
-                    {!error && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={handleCopy}
-                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                {copied ? 'Copied!' : 'Copy'}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleDownload}
-                                className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                                Download
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleCreatePR}
-                                disabled={isCheckingAuth}
-                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300"
-                            >
-                                {isCheckingAuth ? (
-                                    'Checking GitHub...'
-                                ) : githubUser ? (
-                                    'Create Pull Request'
-                                ) : (
-                                    'Sign in with GitHub'
-                                )}
-                            </button>
-                        </>
-                    )}
+                <h3 className="text-lg font-medium">Generated YAML</h3>
+                <div className="space-x-2">
+                    <button
+                        type="button"
+                        onClick={handleDownload}
+                        className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                        Download YAML
+                    </button>
                 </div>
             </div>
 
@@ -180,9 +181,7 @@ export function PreviewForm({ data }: PreviewFormProps) {
                             </svg>
                         </div>
                         <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">
-                                Error Generating YAML
-                            </h3>
+                            <h3 className="text-sm font-medium text-red-800">Error</h3>
                             <div className="mt-2 text-sm text-red-700">
                                 <p>{error}</p>
                             </div>
@@ -190,39 +189,50 @@ export function PreviewForm({ data }: PreviewFormProps) {
                     </div>
                 </div>
             ) : (
-                <div className="bg-gray-900 rounded-lg p-4 overflow-auto">
-                    <pre className="text-sm text-gray-100 font-mono whitespace-pre">
+                <>
+                    <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
                         {yaml}
                     </pre>
-                </div>
-            )}
 
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-                <div className="flex">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <h3 className="text-sm font-medium text-blue-800">
-                            What's next?
-                        </h3>
-                        <div className="mt-2 text-sm text-blue-700">
-                            <p>
-                                {githubUser ? (
-                                    <>
-                                        Click "Create Pull Request" to submit your workflow to the repository.
-                                        Your workflow will be created under your GitHub username: <strong>{githubUser}</strong>.
-                                    </>
-                                ) : (
-                                    'Sign in with GitHub to create a pull request, or download the YAML file to submit it manually.'
-                                )}
-                            </p>
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-blue-800">
+                                    How to Submit Your Recipe
+                                </h3>
+                                <div className="mt-2 text-sm text-blue-700">
+                                    <p>
+                                        1. Click "Download YAML" to save your recipe
+                                        <br />
+                                        2. Fork the repository on GitHub
+                                        <br />
+                                        3. Create a new branch: <code>recipe/your-recipe-name</code>
+                                        <br />
+                                        4. Add your YAML file to: <code>recipes/your-username/recipe-name/recipe.yaml</code>
+                                        <br />
+                                        5. Create a pull request
+                                    </p>
+                                    <p className="mt-2">
+                                        <a
+                                            href="https://github.com/yaniv-golan/ai-recipes/blob/main/docs/contributing.md#recipe-submission-options"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 font-medium"
+                                        >
+                                            View detailed submission instructions →
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </>
+            )}
         </div>
     );
 } 

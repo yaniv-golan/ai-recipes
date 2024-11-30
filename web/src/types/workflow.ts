@@ -20,6 +20,7 @@ export type WorkflowStep = {
     name: string;
     tool: Tool;
     description: string;
+    input_source?: string;
     tool_usage?: string;
     prompt?: string;
     output_handling?: string;

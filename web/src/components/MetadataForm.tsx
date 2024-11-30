@@ -65,9 +65,7 @@ export function MetadataForm({ data, onChange }: MetadataFormProps) {
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                         Name
                     </label>
-                    {!data.name.trim() && (
-                        <span className="text-sm text-red-600">* Required</span>
-                    )}
+                    <span className="text-sm text-red-600">* Required</span>
                 </div>
                 <input
                     type="text"
@@ -75,33 +73,38 @@ export function MetadataForm({ data, onChange }: MetadataFormProps) {
                     value={data.name}
                     onChange={(e) => onChange({ ...data, name: e.target.value })}
                     className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!data.name.trim() ? 'border-red-300' : 'border-gray-300'}`}
-                    placeholder="Workflow Name"
+                    placeholder="Name your workflow"
                     pattern="^[a-zA-Z0-9-]+$"
                     required
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                    Name your workflow
-                </p>
             </div>
 
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description
-                </label>
+                <div className="flex items-center justify-between">
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                        Description
+                    </label>
+                    <span className="text-sm text-red-600">* Required</span>
+                </div>
                 <textarea
                     id="description"
                     value={data.description}
                     onChange={(e) => onChange({ ...data, description: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${!data.description.trim() ? 'border-red-300' : 'border-gray-300'}`}
                     rows={3}
-                    placeholder="Describe your workflow"
+                    placeholder="Brief overview of what this recipe does (max 500 characters)"
+                    maxLength={500}
+                    required
                 />
             </div>
 
             <div>
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-                    Tags
-                </label>
+                <div className="flex items-center justify-between">
+                    <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+                        Tags
+                    </label>
+                    <span className="text-sm text-red-600">* Required</span>
+                </div>
                 <div className="mt-1 flex flex-col space-y-4">
                     <div className="flex items-center space-x-2">
                         <input
@@ -110,9 +113,10 @@ export function MetadataForm({ data, onChange }: MetadataFormProps) {
                             value={tagInput}
                             onChange={(e) => setTagInput(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            className="block w-64 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm border-gray-300"
+                            className={`block w-64 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${data.tags.length === 0 ? 'border-red-300' : 'border-gray-300'}`}
                             placeholder="Add a tag"
                             pattern="^[a-zA-Z0-9-]+$"
+                            required
                         />
                         <button
                             type="button"
@@ -141,6 +145,12 @@ export function MetadataForm({ data, onChange }: MetadataFormProps) {
                             </span>
                         ))}
                     </div>
+
+                    {data.tags.length === 0 && (
+                        <p className="text-sm text-red-600">
+                            Add at least one tag to categorize your workflow
+                        </p>
+                    )}
 
                     <div className="flex flex-wrap gap-2 p-2 bg-gray-50 rounded-md">
                         {COMMON_TAGS.map(tag => (

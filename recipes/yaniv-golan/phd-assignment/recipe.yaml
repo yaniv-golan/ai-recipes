@@ -44,6 +44,7 @@ workflow:
       - Relevant statistics or data for meta-analysis
 
       {{summary_prompt}}
+    output_handling: "Save summaries for use in #collect_summaries"
 
   - id: "collect_summaries"
     name: "Collect Summaries"
@@ -52,9 +53,10 @@ workflow:
       settings:
         enable_markdown: true
     description: "Organize paper summaries in a Google Doc"
+    input_source: "Paper summaries from #summarize_pdfs"
     tool_usage: |
       1. Create a new Google Doc titled "Research Summaries - [Date]"
-      2. Add all PDF summaries with clear section headers
+      2. Add all PDF summaries from #summarize_pdfs with clear section headers
       3. Format for readability
     prompt: |
       Create a new Google Doc with the following structure:
@@ -67,6 +69,7 @@ workflow:
 
       ## Paper Summaries
       [Add summaries here with clear headers]
+    output_handling: "Save document for use in #generate_answer"
 
   - id: "generate_answer"
     name: "Generate Answer"
@@ -76,8 +79,9 @@ workflow:
       settings:
         enable_web_search: false
     description: "Generate comprehensive answer to research question"
+    input_source: "Research summaries from #collect_summaries"
     tool_usage: |
-      1. Upload the Google Doc with summaries
+      1. Upload the Google Doc with summaries from #collect_summaries
       2. Use the analysis prompt to generate answer
       3. Review and refine the response
     prompt: |
